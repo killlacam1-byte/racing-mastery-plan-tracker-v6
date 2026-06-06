@@ -1,0 +1,2343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Racing Master Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+/* ─────────────────────────────────────── TOKENS */
+:root {
+  --red:#E8001D; --dark:#070707; --mid:#111; --panel:#0C0C0C; --card:#0F0F0F;
+  --border:#1E1E1E; --border2:#2A2A2A; --text:#E0E0E0; --muted:#666;
+  --accent:#FF6200; --yellow:#FFD100; --green:#3DB54A; --blue:#1E8FFF;
+  --purple:#A855F7; --teal:#00C8B4; --nav:210px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body {
+  background: var(--dark); color: var(--text);
+  font-family: 'Barlow', sans-serif; font-size: 11.5px;
+  display: flex; min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 60% 40% at 80% 10%, rgba(232,0,29,.04) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 10% 80%, rgba(30,143,255,.03) 0%, transparent 60%);
+}
+
+/* ─────────────────────────────────────── SIDEBAR */
+#sidebar {
+  width: var(--nav); min-height: 100vh; background: var(--mid);
+  border-right: 1px solid var(--border); position: fixed; left: 0; top: 0;
+  display: flex; flex-direction: column; z-index: 250; overflow-y: auto;
+}
+.logo-wrap { padding: 16px 16px 12px; border-bottom: 1px solid var(--border); }
+.logo-wrap h1 {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 18px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--red); line-height: 1;
+}
+.logo-wrap p { font-family: 'Share Tech Mono', monospace; font-size: 7.5px; color: var(--muted); letter-spacing: 1.5px; margin-top: 3px; }
+.phase-chip {
+  padding: 7px 16px; border-bottom: 1px solid var(--border);
+  font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--muted);
+  display: flex; justify-content: space-between;
+}
+.phase-chip strong { color: var(--accent); }
+.nav-sec { padding: 9px 16px 3px; font-family: 'Share Tech Mono', monospace; font-size: 7px; letter-spacing: 2px; color: var(--border2); text-transform: uppercase; }
+.nav-link {
+  display: flex; align-items: center; gap: 9px; padding: 8px 16px;
+  color: var(--muted); text-decoration: none; font-size: 11px; font-weight: 500;
+  border-left: 3px solid transparent; cursor: pointer; transition: all .12s;
+  background: none; border-right: none; border-top: none; border-bottom: none; width: 100%; text-align: left;
+}
+.nav-link:hover { color: var(--text); background: rgba(255,255,255,.025); }
+.nav-link.active { color: var(--text); border-left-color: var(--red); background: rgba(232,0,29,.07); }
+.nav-icon { font-size: 13px; width: 16px; text-align: center; flex-shrink: 0; }
+.nav-bottom { margin-top: auto; padding: 12px 16px; border-top: 1px solid var(--border); }
+.streak-num { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; color: var(--yellow); line-height: 1; }
+.streak-lbl { font-family: 'Share Tech Mono', monospace; font-size: 7px; color: var(--muted); letter-spacing: 1px; margin-top: 2px; }
+
+/* ─────────────────────────────────────── MAIN */
+#main { margin-left: var(--nav); flex: 1; padding: 24px 22px; min-width: 0; }
+.view { display: none; animation: fadeUp .2s ease; }
+.view.active { display: block; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+.view-title {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 24px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text); margin-bottom: 2px;
+}
+.view-sub { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--muted); letter-spacing: 1.5px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+
+/* ─────────────────────────────────────── GRID */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 12px; }
+.g6 { display: grid; grid-template-columns: repeat(6,1fr); gap: 8px; margin-bottom: 12px; }
+
+/* ─────────────────────────────────────── CARDS */
+.card {
+  background: var(--card); border: 1px solid var(--border); padding: 14px;
+  position: relative; transition: border-color .15s;
+}
+.card:hover { border-color: var(--border2); }
+.card-title {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 8.5px; font-weight: 700;
+  letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 9px;
+}
+.stat-xl { font-family: 'Barlow Condensed', sans-serif; font-size: 38px; font-weight: 900; line-height: 1; color: var(--red); }
+.stat-lg { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 900; line-height: 1; color: var(--yellow); }
+.stat-md { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; line-height: 1; }
+.stat-unit { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--muted); margin-top: 3px; }
+.card-accent-red { border-left: 3px solid var(--red); }
+.card-accent-teal { border-left: 3px solid var(--teal); }
+.card-accent-green { border-left: 3px solid var(--green); }
+.card-accent-yellow { border-left: 3px solid var(--yellow); }
+.card-accent-blue { border-left: 3px solid var(--blue); }
+.card-accent-purple { border-left: 3px solid var(--purple); }
+.card-accent-accent { border-left: 3px solid var(--accent); }
+
+/* ─────────────────────────────────────── SECTION LABEL */
+.sl {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 8px; font-weight: 700;
+  letter-spacing: 3px; text-transform: uppercase; color: var(--red);
+  padding: 12px 0 5px; border-bottom: 1px solid var(--border); margin-bottom: 10px;
+}
+
+/* ─────────────────────────────────────── PROGRESS BAR */
+.pbar { height: 5px; background: var(--border); overflow: hidden; margin: 6px 0 2px; }
+.pbar-fill { height: 5px; transition: width .5s cubic-bezier(.4,0,.2,1); }
+
+/* ─────────────────────────────────────── WEEK DOTS */
+.phase-dots { display: flex; flex-direction: column; gap: 5px; }
+.phase-row { display: flex; align-items: center; gap: 4px; }
+.phase-row-label { font-family: 'Share Tech Mono', monospace; font-size: 7px; width: 26px; flex-shrink: 0; }
+.wdot {
+  width: 15px; height: 15px; border: 1px solid var(--border); cursor: pointer;
+  transition: all .12s; flex-shrink: 0; position: relative;
+}
+.wdot.done { background: var(--green); border-color: var(--green); }
+.wdot.done::after { content: ''; }
+.wdot.current { border-width: 2px; border-color: var(--yellow); box-shadow: 0 0 6px rgba(255,209,0,.3); }
+.wdot:hover { border-color: var(--text); }
+.phase-row-date { font-family: 'Share Tech Mono', monospace; font-size: 7px; color: var(--muted); margin-left: 5px; }
+
+/* ─────────────────────────────────────── TRACK CARDS */
+.track-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
+.track-card {
+  background: var(--card); border: 1px solid var(--border); padding: 11px 13px;
+  cursor: pointer; transition: border-color .15s;
+}
+.track-card:hover { border-color: var(--border2); }
+.track-card.is-cota { border-color: var(--accent) !important; background: #0A0400; }
+.track-card.is-finale { border-color: var(--green) !important; background: #010A04; }
+.tc-num { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; color: var(--blue); line-height: 1; }
+.tc-name { font-weight: 600; font-size: 11.5px; margin: 3px 0 1px; }
+.tc-car { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--accent); }
+.tc-stats { display: flex; gap: 12px; margin-top: 7px; }
+.tc-stat { }
+.tc-stat-lbl { font-family: 'Share Tech Mono', monospace; font-size: 7px; color: var(--muted); }
+.tc-stat-val { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; line-height: 1.2; }
+
+/* ─────────────────────────────────────── FORMS */
+.form-row { display: grid; gap: 8px; margin-bottom: 8px; }
+.form-row.c2 { grid-template-columns: 1fr 1fr; }
+.form-row.c3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-row.c4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+label { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--muted); letter-spacing: .8px; display: block; margin-bottom: 3px; }
+input, select, textarea {
+  background: var(--mid); border: 1px solid var(--border); color: var(--text);
+  padding: 7px 10px; font-family: 'Barlow', sans-serif; font-size: 11px; width: 100%; outline: none;
+  transition: border-color .12s;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--red); }
+select option { background: #111; }
+textarea { resize: vertical; min-height: 56px; }
+.btn {
+  background: var(--red); color: #fff; border: none; padding: 8px 18px;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 12px;
+  letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: background .12s;
+}
+.btn:hover { background: #FF1A30; }
+.btn-g { background: var(--green); }
+.btn-g:hover { background: #2DA53A; }
+.btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--muted); }
+.btn-ghost:hover { border-color: var(--text); color: var(--text); }
+
+/* ─────────────────────────────────────── TABLES */
+table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+th {
+  background: #141414; font-family: 'Barlow Condensed', sans-serif; font-size: 8px;
+  font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted);
+  padding: 5px 9px; text-align: left; border-bottom: 1px solid var(--border);
+}
+td { padding: 5px 9px; border-bottom: 1px solid #141414; vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:nth-child(even) { background: #0A0A0A; }
+.mono { font-family: 'Share Tech Mono', monospace; font-size: 10px; }
+.c-red { color: var(--red); }
+.c-green { color: var(--green); }
+.c-yellow { color: var(--yellow); }
+.c-accent { color: var(--accent); }
+.c-blue { color: var(--blue); }
+.c-muted { color: var(--muted); font-size: 10px; }
+.del-btn { background: none; border: none; color: var(--border2); cursor: pointer; font-size: 13px; padding: 0 3px; }
+.del-btn:hover { color: var(--red); }
+
+/* ─────────────────────────────────────── BADGES */
+.badge {
+  display: inline-block; font-family: 'Share Tech Mono', monospace; font-size: 7.5px;
+  padding: 2px 5px; border: 1px solid; vertical-align: middle; line-height: 1.4;
+}
+.b-red { background: #200008; color: var(--red); border-color: var(--red); }
+.b-green { background: #001A08; color: var(--green); border-color: var(--green); }
+.b-yellow { background: #1A1200; color: var(--yellow); border-color: var(--yellow); }
+.b-blue { background: #001228; color: var(--blue); border-color: var(--blue); }
+.b-purple { background: #120020; color: var(--purple); border-color: var(--purple); }
+.b-accent { background: #140600; color: var(--accent); border-color: var(--accent); }
+.b-teal { background: #001210; color: var(--teal); border-color: var(--teal); }
+.b-muted { background: #181818; color: var(--muted); border-color: var(--border2); }
+
+/* ─────────────────────────────────────── STRIPS */
+.strip { padding: 8px 12px; display: flex; align-items: flex-start; gap: 9px; margin-bottom: 9px; font-size: 10px; line-height: 1.5; }
+.strip-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.strip-red { background: #0D0000; border-left: 3px solid var(--red); }
+.strip-red .strip-text { color: #F0C0C0; }
+.strip-yellow { background: #0C0800; border-left: 3px solid var(--yellow); }
+.strip-yellow .strip-text { color: #F0D880; }
+.strip-green { background: #000D04; border-left: 3px solid var(--green); }
+.strip-green .strip-text { color: #C0E8C0; }
+.strip-blue { background: #00060E; border-left: 3px solid var(--blue); }
+.strip-blue .strip-text { color: #A8C8F0; }
+
+/* ─────────────────────────────────────── MENTAL SCORE */
+.score-grid { display: flex; gap: 5px; flex-wrap: wrap; }
+.score-btn {
+  width: 32px; height: 32px; border: 1px solid var(--border); cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700;
+  background: none; color: var(--muted); display: flex; align-items: center; justify-content: center;
+  transition: all .12s;
+}
+.score-btn:hover { border-color: var(--text); color: var(--text); }
+.score-btn.sel { color: #fff; border-color: transparent; }
+
+/* ─────────────────────────────────────── LOG LIST */
+.log-list { max-height: 260px; overflow-y: auto; }
+.log-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.log-item:last-child { border-bottom: none; }
+.log-date { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--muted); white-space: nowrap; }
+.log-main { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; line-height: 1; }
+.log-note { font-size: 9.5px; color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ─────────────────────────────────────── SCHEDULE */
+.sched-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+  border: 1px solid var(--border); margin-bottom: 4px; background: var(--card); transition: background .12s;
+  cursor: pointer;
+}
+.sched-item:hover { background: #131313; }
+.sched-check { width: 16px; height: 16px; cursor: pointer; accent-color: var(--green); flex-shrink: 0; }
+.sched-time { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--muted); width: 78px; flex-shrink: 0; }
+.sched-block { font-weight: 600; font-size: 11px; margin-bottom: 2px; }
+.sched-detail { font-size: 9px; color: var(--muted); }
+.sched-body { flex: 1; min-width: 0; }
+.sched-item.done { opacity: .5; }
+.sched-item.done .sched-block { text-decoration: line-through; color: var(--muted); }
+
+/* ── Grouped, tap-anywhere-to-check schedule ── */
+.sched-day-group { margin-bottom: 14px; }
+.sched-day-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 11px; background: #141414; border-left: 3px solid var(--red); margin-bottom: 5px;
+}
+.sched-day-header.wknd { border-left-color: var(--blue); }
+.sdh-day { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:1.5px; text-transform:uppercase; }
+.sdh-count { font-family:'Share Tech Mono',monospace; font-size:9.5px; color:var(--muted); }
+
+/* ─────────────────────────────────────── NECK LADDER */
+.neck-ladder { display: flex; gap: 5px; align-items: flex-end; height: 56px; margin: 8px 0 4px; }
+.nl-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.nl-bar-wrap { width: 100%; height: 48px; background: var(--border); position: relative; }
+.nl-fill { position: absolute; bottom: 0; width: 100%; background: var(--teal); transition: height .5s; }
+.nl-lbl { font-family: 'Share Tech Mono', monospace; font-size: 7px; color: var(--muted); margin-top: 3px; text-align: center; }
+
+/* ─────────────────────────────────────── HKC CALENDAR */
+.hkc-table-wrap { max-height: 280px; overflow-y: auto; }
+
+/* ─────────────────────────────────────── CHART */
+.chart-box { position: relative; }
+.chart-box.h180 { height: 180px; }
+.chart-box.h240 { height: 240px; }
+.chart-box.h200 { height: 200px; }
+
+/* ─────────────────────────────────────── TOAST */
+#toast {
+  position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+  background: var(--green); color: #fff; padding: 9px 18px;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 1px;
+  transform: translateY(50px); opacity: 0; transition: all .25s; pointer-events: none;
+}
+#toast.show { transform: none; opacity: 1; }
+
+/* ─────────────────────────────────────── LOADING */
+#loading {
+  position: fixed; inset: 0; background: var(--dark); z-index: 9998;
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px;
+  transition: opacity .4s;
+}
+#loading h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; letter-spacing: 3px; color: var(--red); text-transform: uppercase; }
+#loading p { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 2px; }
+.load-bar { width: 200px; height: 2px; background: var(--border); overflow: hidden; }
+.load-fill { height: 2px; background: var(--red); animation: loadAnim 1.2s ease-in-out infinite; }
+@keyframes loadAnim { 0%{width:0;margin-left:0} 50%{width:60%;margin-left:20%} 100%{width:0;margin-left:100%} }
+
+/* ─────────────────────────────────────── SCROLLBAR */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--mid); }
+::-webkit-scrollbar-thumb { background: var(--border2); }
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE TOP BAR + DRAWER OVERLAY (hidden on desktop)
+═══════════════════════════════════════════════════════ */
+#mobile-bar {
+  display: none;
+  position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 200;
+  background: var(--mid); border-bottom: 1px solid var(--border);
+  align-items: center; padding: 0 14px; gap: 12px;
+}
+#mobile-bar .mb-burger {
+  background: none; border: none; color: var(--text); font-size: 22px;
+  cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+#mobile-bar .mb-title {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 16px;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--red); line-height: 1;
+}
+#mobile-bar .mb-sub {
+  font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--muted);
+  margin-left: auto; text-align: right; line-height: 1.5;
+}
+#mobile-bar .mb-sub strong { color: var(--accent); }
+#drawer-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7);
+  z-index: 150;
+}
+#drawer-overlay.show { display: block; }
+
+/* ═══════════════════════════════════════════════════════
+   TABLET  (≤ 1024px)
+═══════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .g6 { grid-template-columns: repeat(3,1fr); }
+  .g4 { grid-template-columns: repeat(2,1fr); }
+  .track-grid { grid-template-columns: repeat(2,1fr); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE  (≤ 768px)  — drawer nav, single-column stacks
+═══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  body { font-size: 13px; }            /* larger base for readability */
+
+  /* Mobile top bar visible */
+  #mobile-bar { display: flex; }
+
+  /* Sidebar becomes slide-out drawer with its own internal scroll */
+  #sidebar {
+    transform: translateX(-100%);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    width: 260px; box-shadow: 4px 0 28px rgba(0,0,0,.7);
+    background: #161616; z-index: 250;
+    height: 100vh; height: 100dvh;          /* full dynamic viewport height */
+    max-height: 100vh; max-height: 100dvh;
+    overflow-y: auto;                        /* scroll inside the drawer */
+    -webkit-overflow-scrolling: touch;       /* momentum scroll on iOS */
+    overscroll-behavior: contain;            /* don't bleed scroll to page behind */
+    padding-bottom: 24px;                    /* breathing room past last item */
+  }
+  #sidebar.open { transform: translateX(0); }
+  .nav-link { padding: 13px 18px; font-size: 14px; color: #B0B0B0; }   /* bigger tap targets, brighter text */
+  .nav-link.active { color: #fff; }
+  .nav-icon { font-size: 16px; width: 20px; }
+  .nav-sec { padding: 12px 18px 4px; font-size: 8px; }
+  /* keep the streak footer from eating tap space - let it sit inline at the end */
+  .nav-bottom { margin-top: 8px; }
+  /* When drawer open, lock the body so the page behind doesn't scroll */
+  body.drawer-open { overflow: hidden; position: fixed; width: 100%; }
+
+  /* Main content full width, pushed below top bar */
+  #main { margin-left: 0; padding: 66px 12px 30px; }
+
+  /* All grids collapse to single column */
+  .g2, .g3, .g4, .g6, .track-grid { grid-template-columns: 1fr; gap: 10px; }
+
+  /* Forms stack */
+  .form-row.c2, .form-row.c3, .form-row.c4 { grid-template-columns: 1fr; }
+
+  /* Bigger touch-friendly inputs & buttons */
+  input, select, textarea { padding: 11px 12px; font-size: 16px; }  /* 16px stops iOS auto-zoom */
+  .btn { padding: 12px 20px; font-size: 14px; width: 100%; }
+  .score-btn { width: 40px; height: 40px; font-size: 17px; }
+  .sched-check { width: 24px; height: 24px; }
+  .wdot { width: 20px; height: 20px; }
+  .del-btn { font-size: 18px; padding: 4px 8px; }
+
+  /* Titles scale down slightly */
+  .view-title { font-size: 21px; }
+  .stat-xl { font-size: 34px; }
+
+  /* Tables: horizontal scroll wrapper */
+  table { display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+  thead, tbody { display: table; width: 100%; min-width: 560px; }
+
+  /* Schedule items: bigger tap target, keep one tidy line */
+  .sched-item { padding: 14px 12px; }
+  .sched-time { width: 64px; }
+  .sched-block { font-size: 13px; }
+  .sched-detail { font-size: 11px; }
+
+  /* Charts a touch taller for legibility */
+  .chart-box.h180 { height: 200px; }
+  .chart-box.h200 { height: 220px; }
+  .chart-box.h240 { height: 260px; }
+
+  /* Phase dot rows scroll if needed */
+  .phase-row { flex-wrap: wrap; }
+
+  /* Log lists taller on mobile */
+  .log-list { max-height: 320px; }
+
+  /* Toast centered bottom, above thumb reach */
+  #toast { left: 14px; right: 14px; bottom: 14px; text-align: center; }
+
+  /* Loading screen */
+  #loading h2 { font-size: 19px; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   SMALL PHONES  (≤ 420px)
+═══════════════════════════════════════════════════════ */
+@media (max-width: 420px) {
+  .g4 { grid-template-columns: 1fr 1fr; }   /* keep 4-stat cards 2-up */
+  .stat-xl { font-size: 30px; }
+  .view-title { font-size: 19px; }
+  #mobile-bar .mb-sub { font-size: 7.5px; }
+  .score-btn { width: 36px; height: 36px; }
+}
+
+/* Desktop: ensure sidebar always visible regardless of .open class */
+@media (min-width: 769px) {
+  #sidebar { transform: none !important; }
+  #drawer-overlay { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- Mobile top bar (hidden on desktop) -->
+<div id="mobile-bar">
+  <button class="mb-burger" onclick="toggleDrawer()" aria-label="Menu">☰</button>
+  <div>
+    <div class="mb-title">RMP</div>
+  </div>
+  <div class="mb-sub">Phase <strong id="mb-phase">1</strong> · Wk <strong id="mb-week">1</strong><br>🔥 <span id="mb-streak">0</span> day streak</div>
+</div>
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+
+<!-- Loading -->
+<div id="loading">
+  <h2>Racing Master Plan</h2>
+  <div class="load-bar"><div class="load-fill"></div></div>
+  <p>Loading tracker data...</p>
+</div>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="logo-wrap">
+    <h1>RMP</h1>
+    <p>RACING MASTER PLAN</p>
+  </div>
+  <div class="phase-chip">
+    Phase <strong id="nav-phase">1</strong> &nbsp;·&nbsp; Week <strong id="nav-week">1</strong>
+  </div>
+  <div class="nav-sec">Overview</div>
+  <button class="nav-link active" data-view="dashboard"><span class="nav-icon">◈</span> Dashboard</button>
+  <button class="nav-link" data-view="schedule"><span class="nav-icon">📅</span> Weekly Schedule</button>
+  <div class="nav-sec">Training</div>
+  <button class="nav-link" data-view="workout"><span class="nav-icon">💪</span> Workout Log</button>
+  <button class="nav-link" data-view="neck"><span class="nav-icon">🎯</span> Neck &amp; Grip</button>
+  <button class="nav-link" data-view="fitness"><span class="nav-icon">🏃</span> Fitness Tests</button>
+  <div class="nav-sec">Sim Racing</div>
+  <button class="nav-link" data-view="acc"><span class="nav-icon">🏎</span> ACC Lap Times</button>
+  <button class="nav-link" data-view="telemetry"><span class="nav-icon">📊</span> Telemetry Log</button>
+  <div class="nav-sec">Karting</div>
+  <button class="nav-link" data-view="karting"><span class="nav-icon">🏁</span> Karting Sessions</button>
+  <div class="nav-sec">Body &amp; Mind</div>
+  <button class="nav-link" data-view="nutrition"><span class="nav-icon">🥩</span> Nutrition &amp; Fuel</button>
+  <button class="nav-link" data-view="bodyweight"><span class="nav-icon">⚖</span> Body Weight</button>
+  <button class="nav-link" data-view="mental"><span class="nav-icon">🧠</span> Mental State</button>
+  <div class="nav-sec">Progress</div>
+  <button class="nav-link" data-view="books"><span class="nav-icon">📚</span> Books</button>
+  <button class="nav-link" data-view="youtube"><span class="nav-icon">▶</span> YouTube Log</button>
+  <button class="nav-link" data-view="settings"><span class="nav-icon">⚙</span> Settings</button>
+  <div class="nav-bottom">
+    <div class="streak-num" id="nav-streak">0</div>
+    <div class="streak-lbl">DAY STREAK</div>
+  </div>
+</nav>
+
+<!-- Main content -->
+<main id="main">
+
+<!-- ═══ DASHBOARD ═══ -->
+<div class="view active" id="view-dashboard">
+  <div class="view-title">Dashboard</div>
+  <div class="view-sub" id="dash-sub">RACING MASTER PLAN · JUN 8 – DEC 6, 2026</div>
+
+  <div class="g6">
+    <div class="card card-accent-red">
+      <div class="card-title">Phase</div>
+      <div class="stat-xl" id="d-phase">1</div>
+      <div class="stat-unit" id="d-phase-name">REBUILD</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Week</div>
+      <div class="stat-xl" id="d-week" style="color:var(--text)">1</div>
+      <div class="stat-unit">OF 26</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Streak</div>
+      <div class="stat-xl" id="d-streak" style="color:var(--yellow)">0</div>
+      <div class="stat-unit">DAYS</div>
+    </div>
+    <div class="card card-accent-teal">
+      <div class="card-title">Neck Load</div>
+      <div class="stat-xl" id="d-neck" style="color:var(--teal)">—</div>
+      <div class="stat-unit">LB HARNESS</div>
+    </div>
+    <div class="card card-accent-accent">
+      <div class="card-title">Best COTA</div>
+      <div class="stat-lg" id="d-cota" style="font-size:16px">—</div>
+      <div class="stat-unit">BMW M4 GT3</div>
+    </div>
+    <div class="card card-accent-green">
+      <div class="card-title">Weight</div>
+      <div class="stat-lg" id="d-weight">190</div>
+      <div class="stat-unit">LB</div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">26-Week Phase Progress</div>
+      <div class="phase-dots" id="d-phase-dots"></div>
+      <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);">OVERALL PROGRESS</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--yellow)" id="d-overall-pct">0%</span>
+      </div>
+      <div class="pbar"><div class="pbar-fill" id="d-overall-bar" style="width:0%;background:var(--red)"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">End-of-Plan Targets</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div>
+          <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:8px;margin-bottom:3px;">
+            <span style="color:var(--blue)">3-MIN SPRINT</span>
+            <span id="d-sprint-val" style="color:var(--yellow)">— / 900m</span>
+          </div>
+          <div class="pbar"><div class="pbar-fill" id="d-sprint-bar" style="width:0%;background:var(--blue)"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:8px;margin-bottom:3px;">
+            <span style="color:var(--teal)">NECK HARNESS</span>
+            <span id="d-neck-val" style="color:var(--yellow)">— / 15lb</span>
+          </div>
+          <div class="pbar"><div class="pbar-fill" id="d-neck-bar" style="width:0%;background:var(--teal)"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:8px;margin-bottom:3px;">
+            <span style="color:var(--accent)">COTA LAP</span>
+            <span id="d-cota-val" style="color:var(--yellow)">— / sub-2:04</span>
+          </div>
+          <div class="pbar"><div class="pbar-fill" id="d-cota-bar" style="width:0%;background:var(--accent)"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:8px;margin-bottom:3px;">
+            <span style="color:var(--green)">BODY WEIGHT</span>
+            <span id="d-wt-val" style="color:var(--yellow)">— / 170–175lb</span>
+          </div>
+          <div class="pbar"><div class="pbar-fill" id="d-wt-bar" style="width:0%;background:var(--green)"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="card">
+      <div class="card-title">Recent Workouts</div>
+      <div class="log-list" id="d-recent-workouts"><p style="color:var(--muted);font-size:10px;">No sessions yet.</p></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Recent ACC Sessions</div>
+      <div class="log-list" id="d-recent-acc"><p style="color:var(--muted);font-size:10px;">No sessions yet.</p></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Mental State (14 Days)</div>
+      <div class="chart-box h180"><canvas id="chart-mental-mini"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCHEDULE ═══ -->
+<div class="view" id="view-schedule">
+  <div class="view-title">Weekly Schedule</div>
+  <div class="view-sub">TAP ANY ROW TO CHECK · GROUPED BY DAY · RESETS EACH WEEK</div>
+  <div class="g2" style="margin-bottom:10px;">
+    <div class="card">
+      <div class="card-title">Select Week</div>
+      <div class="form-row c2">
+        <div><label>WEEK (1–26)</label><input type="number" id="sched-week" min="1" max="26" value="1" oninput="renderSchedule()"></div>
+        <div><label>PHASE</label><input type="text" id="sched-phase-display" readonly style="color:var(--accent)"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Week Completion</div>
+      <div style="display:flex;gap:20px;align-items:flex-end;">
+        <div><div class="stat-xl" id="sched-done" style="font-size:30px">0</div><div class="stat-unit">DONE</div></div>
+        <div><div class="stat-lg" id="sched-total" style="color:var(--muted)">0</div><div class="stat-unit">TOTAL</div></div>
+        <div><div class="stat-xl" id="sched-pct" style="font-size:30px;color:var(--green)">0%</div><div class="stat-unit">COMPLETE</div></div>
+      </div>
+    </div>
+  </div>
+  <div id="sched-list"></div>
+</div>
+
+<!-- ═══ WORKOUT ═══ -->
+<div class="view" id="view-workout">
+  <div class="view-title">Workout Log</div>
+  <div class="view-sub">LOG EVERY SESSION · TRACK SETS, REPS, WEIGHT · REVIEW WEEKLY VOLUME</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Log Session</div>
+      <div class="form-row c2">
+        <div><label>DATE</label><input type="date" id="wo-date"></div>
+        <div><label>PHASE</label><select id="wo-phase">
+          <option>1 – Rebuild</option><option>2 – Foundation</option>
+          <option>3 – Neck &amp; Endurance</option><option>4 – Race-Pace</option><option>5 – Peak</option>
+        </select></div>
+      </div>
+      <div class="form-row">
+        <div><label>TRAINING BLOCK</label><select id="wo-block">
+          <option>Mon PM – Strength A / Lower</option><option>Tue PM – Neck + Grip #1</option>
+          <option>Wed PM – Cardio / VO₂</option><option>Thu PM – Strength B</option>
+          <option>Fri PM – Neck Sub-max + Reaction</option><option>Sat AM – Heavy Lift / Test Day</option>
+          <option>Sat PM – Karting / Gym</option><option>Sun AM – Z2 Endurance</option>
+          <option>Sun PM – Reaction + Anti-Rotation</option>
+        </select></div>
+      </div>
+      <div class="form-row c3">
+        <div><label>DURATION (MIN)</label><input type="number" id="wo-dur" placeholder="30"></div>
+        <div><label>ENERGY 1–10</label><input type="number" id="wo-energy" min="1" max="10" placeholder="7"></div>
+        <div><label>RPE 1–10</label><input type="number" id="wo-rpe" min="1" max="10" placeholder="7"></div>
+      </div>
+      <div class="form-row">
+        <div><label>EXERCISES (one per line or comma-separated)</label>
+          <textarea id="wo-exercises" placeholder="Goblet squat 3x10 @ 40lb&#10;DB bench 3x8 @ 35lb&#10;Pallof press 3x10"></textarea></div>
+      </div>
+      <div class="form-row">
+        <div><label>NOTES / PRs</label><input type="text" id="wo-notes" placeholder="New PR on squat. Neck felt strong."></div>
+      </div>
+      <button class="btn" onclick="saveWorkout()">LOG SESSION</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Session History</div>
+      <div class="log-list" id="wo-history"><p style="color:var(--muted);font-size:10px;">No sessions logged yet.</p></div>
+    </div>
+  </div>
+  <div class="sl">Weekly Volume</div>
+  <div class="card"><div class="chart-box h200"><canvas id="chart-wo-vol"></canvas></div></div>
+</div>
+
+<!-- ═══ NECK ═══ -->
+<div class="view" id="view-neck">
+  <div class="view-title">Neck &amp; Grip Tracker</div>
+  <div class="view-sub">THE RACE-DAY ARMOR · PROGRESS FROM MOBILITY TO 15 LB+ · NEVER RUSH THE LOAD</div>
+  <div class="strip strip-yellow">
+    <span class="strip-icon">⚠</span>
+    <span class="strip-text"><strong>Safety Rule:</strong> If you wake with neck soreness after a harness session, drop the load 5 lb, do chin-tucks only for one full week, then retry. Morning pain = your body's progress signal — respect it.</span>
+  </div>
+  <div class="g3">
+    <div class="card card-accent-teal">
+      <div class="card-title">Current Load</div>
+      <div class="stat-xl" id="neck-cur" style="color:var(--teal)">—</div>
+      <div class="stat-unit">LB HARNESS TARGET</div>
+      <div class="pbar" style="margin-top:8px;"><div class="pbar-fill" id="neck-bar" style="width:0%;background:var(--teal)"></div></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:7.5px;color:var(--muted);margin-top:3px;">Phase 5 target: 15 lb</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Load Ladder</div>
+      <div class="neck-ladder" id="neck-ladder-vis"></div>
+      <div style="display:flex;gap:4px;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:7px;flex:1;color:var(--green);text-align:center;">Ph1</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:7px;flex:1;color:var(--accent);text-align:center;">Ph2</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:7px;flex:1;color:var(--yellow);text-align:center;">Ph3</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:7px;flex:1;color:var(--red);text-align:center;">Ph4</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:7px;flex:1;color:var(--purple);text-align:center;">Ph5</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Last Session</div>
+      <div id="neck-last"><p style="color:var(--muted);font-size:10px;">No sessions logged yet.</p></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Log Neck / Grip Session</div>
+      <div class="form-row c2">
+        <div><label>DATE</label><input type="date" id="neck-date"></div>
+        <div><label>EXERCISE</label><select id="neck-type">
+          <option>Chin Tucks (mobility only)</option>
+          <option>Isometric 4-Way (palm resist)</option>
+          <option>Harness Flexion</option><option>Harness Extension</option>
+          <option>Harness Lateral Isometric</option>
+          <option>Harness 4-Way Full</option>
+          <option>Partner-Resisted Dynamic</option>
+          <option>Farmer Carry</option><option>Dead Hang</option>
+          <option>Plate Pinch</option><option>Wrist Roller</option>
+          <option>Captains of Crush</option><option>Towel Pull-Up</option>
+        </select></div>
+      </div>
+      <div class="form-row c3">
+        <div><label>LOAD (LB)</label><input type="number" id="neck-load" placeholder="2.5" step="0.5" min="0"></div>
+        <div><label>SETS × REPS</label><input type="text" id="neck-sets" placeholder="3x12"></div>
+        <div><label>MORNING PAIN?</label><select id="neck-pain">
+          <option value="N">No pain ✓</option>
+          <option value="Y">⚠ Yes – back off!</option>
+        </select></div>
+      </div>
+      <div class="form-row">
+        <div><label>NOTES</label><input type="text" id="neck-notes" placeholder="Strong. 5-sec eccentric felt controlled."></div>
+      </div>
+      <button class="btn" onclick="saveNeck()">LOG NECK SESSION</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Harness Load Progression</div>
+      <div class="chart-box h200"><canvas id="chart-neck"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Neck Session Log</div>
+    <div class="log-list" id="neck-history"><p style="color:var(--muted);font-size:10px;">No sessions logged yet.</p></div>
+  </div>
+</div>
+
+<!-- ═══ FITNESS ═══ -->
+<div class="view" id="view-fitness">
+  <div class="view-title">Fitness Tests</div>
+  <div class="view-sub">3-MIN SPRINT · DEAD HANG · REACTION TIME · LOG EVERY TEST DAY BENCHMARK</div>
+  <div class="g4">
+    <div class="card card-accent-blue">
+      <div class="card-title">3-Min Sprint Best</div>
+      <div class="stat-xl" id="ft-sprint" style="color:var(--blue)">—</div>
+      <div class="stat-unit">METERS · F1 TARGET ≥900m</div>
+    </div>
+    <div class="card card-accent-teal">
+      <div class="card-title">Dead Hang Best</div>
+      <div class="stat-xl" id="ft-hang" style="color:var(--teal)">—</div>
+      <div class="stat-unit">SECONDS · TARGET 60+s</div>
+    </div>
+    <div class="card card-accent-green">
+      <div class="card-title">5K Time</div>
+      <div class="stat-xl" id="ft-5k" style="color:var(--green)">—</div>
+      <div class="stat-unit">MIN:SEC</div>
+    </div>
+    <div class="card card-accent-yellow">
+      <div class="card-title">Reaction Score</div>
+      <div class="stat-xl" id="ft-react" style="color:var(--yellow)">—</div>
+      <div class="stat-unit">PERSONAL BEST</div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Log Test Result</div>
+      <div class="form-row c2">
+        <div><label>DATE</label><input type="date" id="ft-date"></div>
+        <div><label>TEST TYPE</label><select id="ft-type">
+          <option value="sprint">3-Min Sprint (meters)</option>
+          <option value="hang">Dead Hang (seconds)</option>
+          <option value="5k">5K Time Trial (mm:ss)</option>
+          <option value="reaction">Reaction Score / BatakPro</option>
+          <option value="vo2">VO₂ Interval Pace</option>
+        </select></div>
+      </div>
+      <div class="form-row c2">
+        <div><label>RESULT</label><input type="text" id="ft-result" placeholder="850 or 48 or 28:30"></div>
+        <div><label>WEEK #</label><input type="number" id="ft-week" min="1" max="26" placeholder="1"></div>
+      </div>
+      <div class="form-row">
+        <div><label>NOTES</label><input type="text" id="ft-notes" placeholder="New PR. Energy strong. Sub-900 target next."></div>
+      </div>
+      <button class="btn" onclick="saveFitnessTest()">LOG RESULT</button>
+    </div>
+    <div class="card">
+      <div class="card-title">3-Min Sprint Progress</div>
+      <div class="chart-box h200"><canvas id="chart-sprint"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Test Log</div>
+    <table>
+      <thead><tr><th>DATE</th><th>TEST</th><th>RESULT</th><th>WK</th><th>TARGET</th><th>NOTES</th><th></th></tr></thead>
+      <tbody id="ft-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ ACC ═══ -->
+<div class="view" id="view-acc">
+  <div class="view-title">ACC Lap Times</div>
+  <div class="view-sub">LOG EVERY SESSION · COMPARE TO BENCHMARK · TRACK VS CDA / SOLOX REFERENCE</div>
+  <div class="track-grid" id="track-cards"></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Log Lap Session</div>
+      <div class="form-row c2">
+        <div><label>DATE</label><input type="date" id="acc-date"></div>
+        <div><label>TRACK</label><select id="acc-track">
+          <option value="monza">T1 – Monza (AMG GT3 Evo)</option>
+          <option value="brands">T2 – Brands Hatch (992 GT3 R)</option>
+          <option value="cota">T3 – COTA ★ (BMW M4 GT3)</option>
+          <option value="silverstone">T4 – Silverstone (Ferrari 296 GT3)</option>
+          <option value="spa">T5 – Spa (Lamborghini Evo2)</option>
+          <option value="hungaroring">T6 – Hungaroring (992 GT3 R)</option>
+          <option value="suzuka">T7 – Suzuka (Aston Martin V8)</option>
+          <option value="zandvoort">T8 – Zandvoort (AMG GT3 Evo)</option>
+          <option value="nordschleife">T∞ – Nordschleife (BMW M4 GT3)</option>
+        </select></div>
+      </div>
+      <div class="form-row c3">
+        <div><label>LAP TIME (m:ss.mmm)</label><input type="text" id="acc-time" placeholder="2:05.432"></div>
+        <div><label>SESSION TYPE</label><select id="acc-stype">
+          <option>Hot Lap</option><option>Time Trial</option><option>Qualifying</option>
+          <option>Sprint Race</option><option>Endurance Race</option>
+        </select></div>
+        <div><label>SETUP USED</label><select id="acc-setup">
+          <option>CDA4 Safe</option><option>CDA4 Fast</option><option>CDA4 Quali</option>
+          <option>SOLOX Safe</option><option>SOLOX ESPO</option><option>SOLOX META</option>
+          <option>Custom</option>
+        </select></div>
+      </div>
+      <div class="form-row c2">
+        <div><label>CONDITIONS</label><select id="acc-cond">
+          <option>Dry · 24°C / 33°C track</option><option>Dry · Hot</option>
+          <option>Damp</option><option>Wet</option>
+        </select></div>
+        <div><label>TROPHII.AI UPLOADED?</label><select id="acc-trophii">
+          <option value="N">No</option><option value="Y">Yes ✓</option>
+        </select></div>
+      </div>
+      <div class="form-row">
+        <div><label>NOTES / TROPHII FINDINGS</label>
+          <textarea id="acc-notes" placeholder="Trail braking at T1 improved. Trophii: braking 18m too early at Parabolica. BB moved to 56%."></textarea></div>
+      </div>
+      <button class="btn" onclick="saveACC()">LOG LAP</button>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;">
+        <div class="card-title" style="margin-bottom:0;">Lap Progression</div>
+        <select id="chart-track-select" onchange="renderACC()" style="width:auto;max-width:220px;font-size:10px;padding:5px 8px;">
+          <option value="cota">T3 – COTA ★ (BMW M4 GT3)</option>
+          <option value="monza">T1 – Monza (AMG GT3 Evo)</option>
+          <option value="brands">T2 – Brands Hatch (992 GT3 R)</option>
+          <option value="silverstone">T4 – Silverstone (Ferrari 296)</option>
+          <option value="spa">T5 – Spa (Lamborghini Evo2)</option>
+          <option value="hungaroring">T6 – Hungaroring (992 GT3 R)</option>
+          <option value="suzuka">T7 – Suzuka (Aston Martin V8)</option>
+          <option value="zandvoort">T8 – Zandvoort (AMG GT3 Evo)</option>
+          <option value="nordschleife">T∞ – Nordschleife (BMW M4 GT3)</option>
+        </select>
+      </div>
+      <div id="chart-track-info" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);margin-bottom:6px;"></div>
+      <div class="chart-box h240"><canvas id="chart-cota"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">All ACC Sessions</div>
+    <table>
+      <thead><tr><th>DATE</th><th>TRACK</th><th>LAP TIME</th><th>BENCHMARK</th><th>DELTA</th><th>SESSION</th><th>SETUP</th><th>TROPHII</th><th>NOTES</th><th></th></tr></thead>
+      <tbody id="acc-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ TELEMETRY ═══ -->
+<div class="view" id="view-telemetry">
+  <div class="view-title">Telemetry &amp; Setup Log</div>
+  <div class="view-sub">DOCUMENT EVERY SETUP EXPERIMENT · CDA vs SOLOX · TROPHII.AI KEY FINDINGS</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Log Setup Experiment</div>
+      <div class="form-row c2">
+        <div><label>DATE</label><input type="date" id="tel-date"></div>
+        <div><label>TRACK / CAR</label><input type="text" id="tel-track" placeholder="COTA / BMW M4 GT3"></div>
+      </div>
+      <div class="form-row c4">
+        <div><label>BRAKE BIAS %</label><input type="text" id="tel-bb" placeholder="55.5"></div>
+        <div><label>TC1</label><input type="number" id="tel-tc1" min="0" max="10" placeholder="5"></div>
+        <div><label>TC2</label><input type="number" id="tel-tc2" min="0" max="10" placeholder="2"></div>
+        <div><label>ABS</label><input type="number" id="tel-abs" min="0" max="10" placeholder="2"></div>
+      </div>
+      <div class="form-row c3">
+        <div><label>ENGINE MAP</label><input type="number" id="tel-map" min="1" max="10" placeholder="1"></div>
+        <div><label>BASE SETUP</label><select id="tel-base">
+          <option>CDA4 Safe</option><option>CDA4 Fast</option><option>CDA4 Quali</option>
+          <option>SOLOX Safe</option><option>SOLOX ESPO</option><option>Custom</option>
+        </select></div>
+        <div><label>LAP TIME</label><input type="text" id="tel-time" placeholder="2:04.8"></div>
+      </div>
+      <div class="form-row">
+        <div><label>TROPHII.AI KEY FINDINGS</label>
+          <textarea id="tel-trophii" placeholder="Braking 15m too early at T1. Apex speed -8 km/h vs reference. Throttle 0.3s late."></textarea></div>
+      </div>
+      <div class="form-row">
+        <div><label>WHAT I CHANGED + RESULT</label>
+          <textarea id="tel-change" placeholder="Moved BB from 55 to 56. Trail braking deeper at T1. Result: -0.4s on lap time."></textarea></div>
+      </div>
+      <button class="btn" onclick="saveTelemetry()">SAVE EXPERIMENT</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Experiment Log</div>
+      <div class="log-list" id="tel-history" style="max-height:420px;"><p style="color:var(--muted);font-size:10px;">No experiments logged yet.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ KARTING ═══ -->
+<div class="view" id="view-karting">
+  <div class="view-title">Karting Sessions</div>
+  <div class="view-sub">K1 SPEED WOODLANDS · MSR HOUSTON · HKC SENIOR CLASS (185–220 LB)</div>
+  <div class="g3">
+    <div class="card card-accent-accent" style="border-left:3px solid var(--accent)">
+      <div class="card-title">K1 Speed Woodlands</div>
+      <div class="stat-xl" id="k1-count" style="font-size:30px;color:var(--accent)">0</div>
+      <div class="stat-unit">SESSIONS · Electric ~45 mph</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);margin-top:5px;">15 S Trade Center Pkwy, Conroe TX · $29.99/race</div>
+    </div>
+    <div class="card card-accent-blue">
+      <div class="card-title">MSR Houston Karting</div>
+      <div class="stat-xl" id="msr-count" style="font-size:30px;color:var(--blue)">0</div>
+      <div class="stat-unit">SESSIONS · Outdoor Gas · 0.7 mi</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);margin-top:5px;">1 Performance Dr, Angleton TX · $25/session</div>
+    </div>
+    <div class="card card-accent-red">
+      <div class="card-title">HKC – Senior Class</div>
+      <div class="stat-xl" id="hkc-count" style="font-size:30px;">0</div>
+      <div class="stat-unit">RACES · 185–220 LB CLASS</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);margin-top:5px;">3528 S Loop 336 E, Conroe TX · $75/season prepay</div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Log Session</div>
+      <div class="form-row c2">
+        <div><label>DATE</label><input type="date" id="kart-date"></div>
+        <div><label>VENUE</label><select id="kart-venue">
+          <option value="k1">K1 Speed The Woodlands</option>
+          <option value="msr">MSR Houston Karting</option>
+          <option value="hkc">Houston Karting Complex</option>
+        </select></div>
+      </div>
+      <div class="form-row c2">
+        <div><label>SESSION TYPE</label><select id="kart-type">
+          <option>Arrive &amp; Drive (practice)</option>
+          <option>K1 Challenge GP League</option>
+          <option>HKC Racing Series – League Round</option>
+          <option>HKC Tuesday Practice ($20)</option>
+          <option>MSR Multi-Session Pack</option>
+        </select></div>
+        <div><label>FINISH POSITION</label><input type="text" id="kart-finish" placeholder="3rd of 8"></div>
+      </div>
+      <div class="form-row c3">
+        <div><label>BEST LAP / TIME</label><input type="text" id="kart-lap" placeholder="1:02.3"></div>
+        <div><label>ENERGY 1–10</label><input type="number" id="kart-energy" min="1" max="10" placeholder="8"></div>
+        <div><label>CAFFEINE GUM?</label><select id="kart-gum">
+          <option value="Y">Yes ✓ (20–30 min pre)</option>
+          <option value="N">No</option>
+        </select></div>
+      </div>
+      <div class="form-row">
+        <div><label>NOTES / RACECRAFT OBSERVATIONS</label>
+          <textarea id="kart-notes" placeholder="Better trail braking into hairpin. Defended P4 into T1. Overheated mid-race – need more electrolytes."></textarea></div>
+      </div>
+      <button class="btn" onclick="saveKarting()">LOG SESSION</button>
+    </div>
+    <div class="card">
+      <div class="card-title">HKC Racing Series 2026 Calendar</div>
+      <div class="hkc-table-wrap">
+        <table>
+          <thead><tr><th>DATE</th><th>SEASON</th><th>TYPE</th><th>PHASE</th><th>STATUS</th></tr></thead>
+          <tbody id="hkc-cal"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Session History</div>
+    <table>
+      <thead><tr><th>DATE</th><th>VENUE</th><th>TYPE</th><th>BEST LAP</th><th>FINISH</th><th>GUM</th><th>ENERGY</th><th>NOTES</th><th></th></tr></thead>
+      <tbody id="kart-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ NUTRITION & FUEL ═══ -->
+<div class="view" id="view-nutrition">
+  <div class="view-title">Nutrition &amp; Fuel</div>
+  <div class="view-sub">~2,300–2,500 KCAL · 155–170G PROTEIN · WEEKLY GROCERY CHECKLIST · MEAL TIMING</div>
+
+  <div class="g4">
+    <div class="card card-accent-red"><div class="card-title">Calories / Day</div><div class="stat-lg" style="color:var(--red)">2,300–2,500</div><div class="stat-unit">TRAINING DAYS</div></div>
+    <div class="card card-accent-yellow"><div class="card-title">Protein</div><div class="stat-lg" style="color:var(--yellow)">155–170g</div><div class="stat-unit">1.8–2.0 G/KG</div></div>
+    <div class="card card-accent-accent"><div class="card-title">Carbs</div><div class="stat-lg" style="color:var(--accent)">240–290g</div><div class="stat-unit">FUEL + RECOVERY</div></div>
+    <div class="card card-accent-blue"><div class="card-title">Water</div><div class="stat-lg" style="color:var(--blue)">3.5–4.0L</div><div class="stat-unit">+ ELECTROLYTES</div></div>
+  </div>
+
+  <div class="strip strip-red">
+    <span class="strip-icon">⚠</span>
+    <span class="strip-text"><strong>Weight Drop Rule:</strong> If body weight drops more than 2 lb in one week, add +250 kcal of carbohydrates immediately. Slow recomp (−0.3 to −0.5 lb/week) preserves muscle and reaction time.</span>
+  </div>
+
+  <div class="sl">Weekly Grocery List — Check Off As You Shop</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">🥩 Proteins</div>
+      <div id="groc-protein"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🍠 Carbs &amp; Fruit</div>
+      <div id="groc-carbs"></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">🥦 Vegetables &amp; Fats</div>
+      <div id="groc-veg"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">💊 Supplements &amp; Pre-Workout</div>
+      <div id="groc-supp"></div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+    <button class="btn btn-ghost" onclick="resetGrocery()" style="width:auto;">↺ RESET LIST FOR NEW WEEK</button>
+    <span style="font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--muted);">Checkmarks save automatically · reset each shopping trip</span>
+  </div>
+
+  <div class="sl">Daily Eating Routine</div>
+  <div class="g3">
+    <div class="card card-accent-green">
+      <div class="card-title">6:00–7:20 AM · Breakfast</div>
+      <div style="font-size:11px;line-height:1.7;">3-egg omelet · 50g oats · 100g berries · black coffee (~150mg caffeine)<br><span style="color:var(--muted)">+ Creatine 5g · Vit D3 · Omega-3</span></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--yellow);margin-top:5px;">~600 KCAL · 35P / 60C / 20F</div>
+    </div>
+    <div class="card">
+      <div class="card-title">10:00 AM · Mid-Morning</div>
+      <div style="font-size:11px;line-height:1.7;">Greek yogurt 200g · 1 banana · 10 almonds<br><span style="color:var(--muted)">+ Beta-alanine 3.2g with this meal</span></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--yellow);margin-top:5px;">~300 KCAL · 22P / 40C / 8F</div>
+    </div>
+    <div class="card">
+      <div class="card-title">12:30 PM · Lunch</div>
+      <div style="font-size:11px;line-height:1.7;">150g chicken or salmon · 80g dry brown rice/quinoa · large mixed salad · 1 tbsp olive oil</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--yellow);margin-top:5px;">~700 KCAL · 45P / 70C / 15F</div>
+    </div>
+    <div class="card card-accent-red">
+      <div class="card-title">5:30 PM · Pre-Workout ★</div>
+      <div style="font-size:11px;line-height:1.7;">2 rice cakes · 1 tbsp peanut butter · 1 banana<br><span style="color:var(--red)">Pre-workout supplement 6:00–6:10 pm</span><br><span style="color:var(--muted)">LOW fat · LOW fiber · fast carbs</span></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--yellow);margin-top:5px;">~250 KCAL · 15P / 35C / 5F</div>
+    </div>
+    <div class="card card-accent-accent">
+      <div class="card-title">7:00–7:45 PM · Post-WO / Dinner</div>
+      <div style="font-size:11px;line-height:1.7;">Whey 30g + banana if late · then: 150–200g lean protein · 200g sweet potato · 2 cups veg + olive oil</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--yellow);margin-top:5px;">~700 KCAL · 50P / 70C / 15F</div>
+    </div>
+    <div class="card card-accent-blue">
+      <div class="card-title">10:00 PM · Pre-Bed</div>
+      <div style="font-size:11px;line-height:1.7;">200g cottage cheese OR casein 25g<br><span style="color:var(--muted)">+ Magnesium glycinate 300–400mg for sleep</span></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--yellow);margin-top:5px;">~150 KCAL · 25P / 5C / 2F</div>
+    </div>
+  </div>
+
+  <div class="sl">Pre-Sim &amp; Pre-Karting Fuel</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>TIMING</th><th>CONTEXT</th><th>WHAT TO TAKE</th></tr></thead>
+      <tbody>
+        <tr><td class="mono c-accent">2 hr before sim</td><td class="c-muted">Before 8 PM ACC</td><td>40–60g complex carbs + 25g protein</td></tr>
+        <tr><td class="mono c-accent">30 min before sim</td><td class="c-muted">Pre-session</td><td>100–200mg caffeine + 500ml water + electrolytes</td></tr>
+        <tr><td class="mono c-accent">During sim &gt;90 min</td><td class="c-muted">Long stints</td><td>30g carbs/hr (banana, rice cake) + water sips</td></tr>
+        <tr><td class="mono c-red">20–30 min pre-kart ★</td><td class="c-muted">K1/MSR/HKC</td><td><strong>1 caffeine gum (100mg)</strong> + 500ml water + electrolytes if outdoor</td></tr>
+        <tr><td class="mono c-accent">Post-session</td><td class="c-muted">Within 60 min</td><td>Whey + banana or protein meal · rehydrate 1.5× fluid lost</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sl">Avoid Around Training &amp; Sim</div>
+  <div class="card">
+    <div style="font-size:10.5px;line-height:1.9;color:var(--muted);">
+      <div>✗ <strong style="color:#F08080;">Heavy fried / fast food</strong> within 90 min of training — sluggish, nausea</div>
+      <div>✗ <strong style="color:#F08080;">High-fiber meals</strong> within 2 hr of a sim race — gas/discomfort in long stints</div>
+      <div>✗ <strong style="color:#F08080;">Alcohol</strong> within 12 hr of training — wrecks sleep + reaction time 24h</div>
+      <div>✗ <strong style="color:#F08080;">Stacked energy drinks + coffee</strong> — cap total caffeine at 400mg/day</div>
+      <div>✗ <strong style="color:#F08080;">Caffeine after 3 PM</strong> on karting Saturdays — protects 10:30 bedtime</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BODY WEIGHT ═══ -->
+<div class="view" id="view-bodyweight">
+  <div class="view-title">Body Weight</div>
+  <div class="view-sub">LOG DAILY · RECOMP PACE: −0.3 TO −0.5 LB/WEEK · TARGET 170–175 LB BY DEC 6</div>
+  <div class="strip strip-red">
+    <span class="strip-icon">⚠</span>
+    <span class="strip-text"><strong>Weight Drop Rule:</strong> If body weight drops more than 2 lb in one week, add +250 kcal of carbohydrates immediately. Aggressive cuts destroy reaction time and recovery quality.</span>
+  </div>
+  <div class="g3">
+    <div class="card card-accent-green">
+      <div class="card-title">Current Weight</div>
+      <div class="stat-xl" id="bw-cur" style="color:var(--green)">190</div>
+      <div class="stat-unit">LB</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Total Lost</div>
+      <div class="stat-xl" id="bw-lost">0.0</div>
+      <div class="stat-unit">LB SINCE JUN 8, 2026</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Target Range</div>
+      <div class="stat-lg" style="color:var(--yellow)">170–175</div>
+      <div class="stat-unit">LB BY DEC 6</div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Log Weight</div>
+      <div class="form-row c2">
+        <div><label>DATE</label><input type="date" id="bw-date"></div>
+        <div><label>WEIGHT (LB)</label><input type="number" id="bw-weight" step="0.1" placeholder="190.0" min="100"></div>
+      </div>
+      <div class="form-row">
+        <div><label>NOTES</label><input type="text" id="bw-notes" placeholder="Morning fasted. Feeling lean today."></div>
+      </div>
+      <button class="btn" onclick="saveWeight()">LOG WEIGHT</button>
+      <div class="sl" style="margin-top:14px;">Phase Checkpoints</div>
+      <table>
+        <thead><tr><th>PHASE</th><th>DATES</th><th>TARGET</th><th>ACTUAL</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge b-green">Ph1</span></td><td class="mono c-muted">Jun 8–Jul 5</td><td class="mono c-yellow">190 lb</td><td id="bwp1" class="mono">—</td></tr>
+          <tr><td><span class="badge b-accent">Ph2</span></td><td class="mono c-muted">Jul 6–Aug 16</td><td class="mono c-yellow">186–188 lb</td><td id="bwp2" class="mono">—</td></tr>
+          <tr><td><span class="badge b-yellow">Ph3</span></td><td class="mono c-muted">Aug 17–Sep 27</td><td class="mono c-yellow">182–185 lb</td><td id="bwp3" class="mono">—</td></tr>
+          <tr><td><span class="badge b-red">Ph4</span></td><td class="mono c-muted">Sep 28–Nov 8</td><td class="mono c-yellow">178–182 lb</td><td id="bwp4" class="mono">—</td></tr>
+          <tr><td><span class="badge b-purple">Ph5</span></td><td class="mono c-muted">Nov 9–Dec 6</td><td class="mono c-yellow">170–175 lb</td><td id="bwp5" class="mono">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Weight Trend</div>
+      <div class="chart-box h240"><canvas id="chart-weight"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MENTAL ═══ -->
+<div class="view" id="view-mental">
+  <div class="view-title">Mental State</div>
+  <div class="view-sub">DAILY SCORE 1–10 · VISUALIZATION STREAK · SLEEP TRACKING</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Log Today</div>
+      <div class="form-row c2">
+        <div><label>DATE</label><input type="date" id="ms-date"></div>
+        <div><label>VISUALIZATION (10–15 MIN)?</label><select id="ms-viz">
+          <option value="Y">Yes ✓ (full 10–15 min)</option>
+          <option value="P">Partial (5–10 min)</option>
+          <option value="N">No – skipped</option>
+        </select></div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <label>MENTAL STATE SCORE</label>
+        <div class="score-grid" id="score-grid"></div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--muted);margin-top:5px;">SELECTED: <span id="score-val" style="color:var(--yellow)">—</span></div>
+      </div>
+      <div class="form-row c2">
+        <div><label>SLEEP HOURS</label><input type="number" id="ms-sleep" min="0" max="12" step="0.5" placeholder="7.5"></div>
+        <div><label>BED TIME</label><input type="time" id="ms-bed" placeholder="22:30"></div>
+      </div>
+      <div class="form-row">
+        <div><label>NOTES / OBSERVATIONS</label>
+          <textarea id="ms-notes" placeholder="Focused during ACC tonight. Visualization was vivid. Good sleep."></textarea></div>
+      </div>
+      <button class="btn" onclick="saveMental()">LOG TODAY</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Mental State — 30 Days</div>
+      <div class="chart-box h240"><canvas id="chart-mental"></canvas></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Recent Log</div>
+      <div class="log-list" id="ms-history"><p style="color:var(--muted);font-size:10px;">No entries yet.</p></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Streaks</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <div class="card-title">DAY STREAK</div>
+          <div class="stat-xl" id="ms-day-streak" style="color:var(--yellow)">0</div>
+          <div class="stat-unit">CONSECUTIVE DAYS LOGGED</div>
+        </div>
+        <div>
+          <div class="card-title">VIZ STREAK</div>
+          <div class="stat-xl" id="ms-viz-streak" style="color:var(--green)">0</div>
+          <div class="stat-unit">DAYS WITH VISUALIZATION</div>
+        </div>
+      </div>
+      <div class="strip strip-green" style="margin-top:12px;">
+        <span class="strip-text"><strong>Daily Mental Habit:</strong> 10–15 min visualization every morning. Never skip. Based on Inner Speed Secrets + With Winning in Mind.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BOOKS ═══ -->
+<div class="view" id="view-books">
+  <div class="view-title">Books &amp; Study</div>
+  <div class="view-sub">22 BOOKS ACROSS 5 PHASES · TRACK READING PROGRESS · LOG KEY TAKEAWAYS</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Update Book Progress</div>
+      <div class="form-row">
+        <div><label>BOOK</label><select id="book-select" style="font-size:10px;">
+          <option value="physics_racing">Physics of Racing Series — Beckman (FREE)</option>
+          <option value="going_faster">Going Faster! — Lopez &amp; Sullivan ($35)</option>
+          <option value="inner_speed">Inner Speed Secrets — Bentley ($20)</option>
+          <option value="technique">Technique of Motor Racing — Taruffi ($30)</option>
+          <option value="kart_master">Master Kart Driving — Dove ($19)</option>
+          <option value="dynamics_speed">Dynamics of Speed — Godwin ($35)</option>
+          <option value="bondurant">Bob Bondurant on Race Kart Driving ($22)</option>
+          <option value="going_nowhere">Going Nowhere Fast (ACC) — Zwa (Free)</option>
+          <option value="karting_all">Karting: Everything You Need — Gidley ($25)</option>
+          <option value="milliken">Race Car Vehicle Dynamics — Milliken</option>
+          <option value="tune_win">Tune to Win — Carroll Smith ($35)</option>
+          <option value="engineer_win">Engineer to Win — Carroll Smith ($40)</option>
+          <option value="drive_win">Drive to Win — Carroll Smith ($30)</option>
+          <option value="speed_secrets">Speed Secrets Series — Bentley ($25–40)</option>
+          <option value="science_speed">Science of Speed Series ($60 set)</option>
+          <option value="sim_manual">Sim Racer's Training Manual ($20)</option>
+          <option value="alien">Becoming an Alien — iRacer X ($15)</option>
+          <option value="winning_mind">With Winning in Mind — Bassham ($17)</option>
+          <option value="warrior">The Warrior's Mind — Mucci ($15)</option>
+          <option value="optimum_drive">Optimum Drive — Gerrard &amp; McNish ($22)</option>
+          <option value="driving_perf">Driving Performance — Goddard ($28)</option>
+          <option value="confident">The Confident Racer ($49)</option>
+        </select></div>
+      </div>
+      <div class="form-row c3">
+        <div><label>STATUS</label><select id="book-status">
+          <option value="not_started">Not Started</option>
+          <option value="reading">In Progress</option>
+          <option value="done">Completed ✓</option>
+        </select></div>
+        <div><label>% COMPLETE</label><input type="number" id="book-pct" min="0" max="100" placeholder="0"></div>
+        <div><label>PHASE</label><select id="book-phase">
+          <option>Phase 1</option><option>Phase 2</option><option>Phase 3</option>
+          <option>Phase 4</option><option>Phase 5</option>
+        </select></div>
+      </div>
+      <div class="form-row">
+        <div><label>KEY TAKEAWAY / CONCEPT APPLIED IN SIM</label>
+          <textarea id="book-note" placeholder="Trail braking from Ch.4 applied at COTA tonight. Improved T1 by 0.3s. Connect every book concept to next ACC session."></textarea></div>
+      </div>
+      <button class="btn" onclick="saveBook()">UPDATE PROGRESS</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Reading Progress</div>
+      <div id="book-list" style="max-height:420px;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ YOUTUBE ═══ -->
+<div class="view" id="view-youtube">
+  <div class="view-title">YouTube Log</div>
+  <div class="view-sub">DOCUMENT THE JOURNEY · 1 VIDEO/WEEK · RECORD EVERY SIM SESSION</div>
+  <div class="strip strip-blue">
+    <span class="strip-icon">▶</span>
+    <span class="strip-text"><strong>Content Strategy:</strong> Record footage every ACC session. Upload telemetry to Trophii.AI. Weekly video: lap delta + setup note + mental check-in + karting debrief. Test Day results = dedicated upload. The plan IS the content.</span>
+  </div>
+  <div class="g3">
+    <div class="card card-accent-red">
+      <div class="card-title">Videos Published</div>
+      <div class="stat-xl" id="yt-vids">0</div>
+      <div class="stat-unit">TOTAL UPLOADS</div>
+    </div>
+    <div class="card card-accent-yellow">
+      <div class="card-title">Weekly Streak</div>
+      <div class="stat-xl" id="yt-streak" style="color:var(--yellow)">0</div>
+      <div class="stat-unit">CONSECUTIVE WEEKS</div>
+    </div>
+    <div class="card card-accent-blue">
+      <div class="card-title">Sessions Recorded</div>
+      <div class="stat-xl" id="yt-recorded" style="color:var(--blue)">0</div>
+      <div class="stat-unit">FOOTAGE SESSIONS</div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Log Content</div>
+      <div class="form-row c2">
+        <div><label>DATE</label><input type="date" id="yt-date"></div>
+        <div><label>TYPE</label><select id="yt-type">
+          <option value="video">Published Video</option>
+          <option value="short">YouTube Short</option>
+          <option value="recorded">Recorded (not uploaded)</option>
+          <option value="trophii">Trophii.AI Analysis</option>
+        </select></div>
+      </div>
+      <div class="form-row">
+        <div><label>TITLE / DESCRIPTION</label>
+          <input type="text" id="yt-title" placeholder="Week 3 COTA – 2:06 to 2:04 with CDA4 Setup + Trophii Analysis"></div>
+      </div>
+      <div class="form-row c2">
+        <div><label>WEEK #</label><input type="number" id="yt-week" min="1" max="26" placeholder="1"></div>
+        <div><label>PHASE</label><select id="yt-phase">
+          <option>Phase 1</option><option>Phase 2</option><option>Phase 3</option>
+          <option>Phase 4</option><option>Phase 5</option>
+        </select></div>
+      </div>
+      <div class="form-row">
+        <div><label>URL (if published)</label><input type="text" id="yt-url" placeholder="https://youtube.com/watch?v=..."></div>
+      </div>
+      <button class="btn" onclick="saveYouTube()">LOG CONTENT</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Content History</div>
+      <div class="log-list" id="yt-history" style="max-height:380px;"><p style="color:var(--muted);font-size:10px;">No content logged yet.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div class="view" id="view-settings">
+  <div class="view-title">Settings</div>
+  <div class="view-sub">CONFIGURATION · DATA EXPORT / IMPORT</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Plan Configuration</div>
+      <div class="form-row">
+        <div><label>YOUR NAME</label><input type="text" id="set-name" placeholder="Driver Name"></div>
+      </div>
+      <div class="form-row c2">
+        <div><label>STARTING WEIGHT (LB)</label><input type="number" id="set-sw" value="190"></div>
+        <div><label>TARGET WEIGHT (LB)</label><input type="number" id="set-tw" value="172.5"></div>
+      </div>
+      <div class="form-row">
+        <div><label>PLAN START DATE</label><input type="date" id="set-start" value="2026-06-08"></div>
+      </div>
+      <button class="btn btn-g" onclick="saveSettings()">SAVE SETTINGS</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Data Management</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="btn" onclick="exportData()">⬇ EXPORT ALL DATA (JSON)</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">⬆ IMPORT DATA (JSON)</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+        <button class="btn btn-ghost" style="color:var(--red);border-color:rgba(232,0,29,.4)"
+          onclick="if(confirm('Clear ALL data? This cannot be undone.')) clearAll()">✕ CLEAR ALL DATA</button>
+      </div>
+      <div style="margin-top:12px;font-size:9.5px;color:var(--muted);">
+        All data is stored in this app's persistent storage.<br>
+        Export regularly to create a backup.
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+<div id="toast">SAVED ✓</div>
+
+<script>
+/* ════════════════════════════════════════
+   CONSTANTS
+════════════════════════════════════════ */
+const PLAN_START = new Date('2026-06-08T00:00:00');
+const PHASES = [
+  {n:1,name:'Rebuild',       wks:[1,4],  dates:'Jun 8–Jul 5',    col:'var(--green)'},
+  {n:2,name:'Foundation',    wks:[5,10], dates:'Jul 6–Aug 16',   col:'var(--accent)'},
+  {n:3,name:'Neck & Endurance',wks:[11,16],dates:'Aug 17–Sep 27', col:'var(--yellow)'},
+  {n:4,name:'Race-Pace',     wks:[17,22],dates:'Sep 28–Nov 8',   col:'var(--red)'},
+  {n:5,name:'Peak',          wks:[23,26],dates:'Nov 9–Dec 6',    col:'var(--purple)'}
+];
+const TRACKS = [
+  {id:'monza',       num:'T1', name:'Monza',            car:'AMG GT3 Evo',       bench:'1:46.7', phase:1},
+  {id:'brands',      num:'T2', name:'Brands Hatch',     car:'Porsche 992 GT3 R', bench:'1:22.7', phase:1},
+  {id:'cota',        num:'T3', name:'COTA ★',           car:'BMW M4 GT3',        bench:'2:03.6', phase:2, cota:true},
+  {id:'silverstone', num:'T4', name:'Silverstone',      car:'Ferrari 296 GT3',   bench:'1:58.1', phase:2},
+  {id:'spa',         num:'T5', name:'Spa-Francorchamps',car:'Lamborghini Evo2',  bench:'2:15.5', phase:3},
+  {id:'hungaroring', num:'T6', name:'Hungaroring',      car:'Porsche 992 GT3 R', bench:'1:42.7', phase:3},
+  {id:'suzuka',      num:'T7', name:'Suzuka',           car:'Aston Martin V8',   bench:'1:58.9', phase:4},
+  {id:'zandvoort',   num:'T8', name:'Zandvoort',        car:'AMG GT3 Evo',       bench:'1:34.0', phase:4},
+  {id:'nordschleife',num:'T∞', name:'Nordschleife',     car:'BMW M4 GT3',        bench:'8:03',   phase:5, finale:true},
+];
+const HKC = [
+  {date:'2026-06-13',s:'S2',t:'Race',p:1},{date:'2026-06-20',s:'S2',t:'Endurance',p:1},
+  {date:'2026-07-11',s:'S3',t:'Race',p:2},{date:'2026-07-25',s:'S3',t:'Race',p:2},
+  {date:'2026-08-08',s:'S3',t:'Race',p:2},{date:'2026-08-22',s:'S3',t:'Race',p:3},
+  {date:'2026-09-05',s:'S3',t:'Race',p:3},{date:'2026-09-19',s:'S3',t:'Endurance',p:3},
+  {date:'2026-10-10',s:'S4',t:'Race',p:4},{date:'2026-10-17',s:'S4',t:'Race',p:4},
+  {date:'2026-11-07',s:'S4',t:'Race',p:4},{date:'2026-11-14',s:'S4',t:'Race',p:5},
+  {date:'2026-12-05',s:'S4',t:'Race',p:5},{date:'2026-12-12',s:'S4',t:'Endurance',p:5},
+];
+const BOOK_NAMES = {
+  physics_racing:'Physics of Racing — Beckman', going_faster:'Going Faster! — Lopez',
+  inner_speed:'Inner Speed Secrets — Bentley', technique:'Technique of Motor Racing — Taruffi',
+  kart_master:'Master Kart Driving — Dove', dynamics_speed:'Dynamics of Speed — Godwin',
+  bondurant:'Bondurant on Race Kart Driving', going_nowhere:'Going Nowhere Fast (ACC) — Zwa',
+  karting_all:'Karting: Everything You Need — Gidley', milliken:'Race Car Vehicle Dynamics — Milliken',
+  tune_win:'Tune to Win — Carroll Smith', engineer_win:'Engineer to Win — Carroll Smith',
+  drive_win:'Drive to Win — Carroll Smith', speed_secrets:'Speed Secrets Series — Bentley',
+  science_speed:'Science of Speed Series', sim_manual:"Sim Racer's Training Manual",
+  alien:'Becoming an Alien — iRacer X', winning_mind:'With Winning in Mind — Bassham',
+  warrior:"The Warrior's Mind — Mucci", optimum_drive:'Optimum Drive — Gerrard & McNish',
+  driving_perf:'Driving Performance — Goddard', confident:'The Confident Racer'
+};
+const SCHED_ITEMS = [
+  // ── MON ──
+  {day:'MON',time:'AM',     block:'Morning routine',       detail:'10–15 min visualization · breakfast · creatine + D3 + omega-3',                          wknd:false},
+  {day:'MON',time:'6:30 PM',block:'Strength A — Lower',     detail:'Squat · hinge/RDL · push or pull compound · Pallof core. Pre-workout 6:00pm. Log sets/reps/weight.', wknd:false},
+  {day:'MON',time:'8:00 PM',block:'Study + ACC sim',        detail:'Technique reading → apply concept on track · record footage · telemetry → Trophii.AI',  wknd:false},
+  {day:'MON',time:'9:00 PM',block:'Debrief & journal',      detail:'Lap delta · setup note · mental state 1–10 · flag YouTube clip · bed 10:30',            wknd:false},
+
+  // ── TUE ──
+  {day:'TUE',time:'AM',     block:'Morning routine',       detail:'Visualization · breakfast · supplements',                                               wknd:false},
+  {day:'TUE',time:'6:30 PM',block:'Neck + Grip',            detail:'Harness 4-way (Ph2+: 2.5→15lb) · farmer carry · dead hang · plate pinch. Ph1 = mobility only.', wknd:false},
+  {day:'TUE',time:'8:00 PM',block:'Physics study + ACC sim',detail:'Vehicle-dynamics reading · setup experiment night · log change + result · Trophii compare', wknd:false},
+  {day:'TUE',time:'9:00 PM',block:'Debrief & journal',      detail:'Lap delta · setup note · mental state · bed 10:30',                                      wknd:false},
+
+  // ── WED ──
+  {day:'WED',time:'AM',     block:'Morning routine',       detail:'Visualization · breakfast · supplements',                                               wknd:false},
+  {day:'WED',time:'6:30 PM',block:'Cardio / VO₂',           detail:'Z2 25–30 min (Ph1–2) OR 4×3 min VO₂ @90% (Ph3–5) + 5 min reaction drill',               wknd:false},
+  {day:'WED',time:'8:00 PM',block:'Technique study + ACC sim',detail:'Going Faster / Speed Secrets · deliberate practice · record · telemetry review',       wknd:false},
+  {day:'WED',time:'9:00 PM',block:'Debrief & journal',      detail:'Lap delta · mental state · bed 10:30',                                                   wknd:false},
+
+  // ── THU ──
+  {day:'THU',time:'AM',     block:'Morning routine',       detail:'Visualization · breakfast · supplements',                                               wknd:false},
+  {day:'THU',time:'6:30 PM',block:'Strength B',             detail:'Trap-bar DL · overhead press · chin-up · anti-rotation core · hollow holds',            wknd:false},
+  {day:'THU',time:'8:00 PM',block:'Setup study + ACC sim',  detail:'Setup theory · apply setup concept on track · record · Trophii compare',                wknd:false},
+  {day:'THU',time:'9:00 PM',block:'Debrief & journal',      detail:'Lap delta · mental state · bed 10:30',                                                   wknd:false},
+
+  // ── FRI ──
+  {day:'FRI',time:'AM',     block:'Morning routine',       detail:'Visualization · breakfast · supplements',                                               wknd:false},
+  {day:'FRI',time:'6:30 PM',block:'Neck sub-max + Reaction',detail:'Sub-max harness 4-way · wrist roller · BatakPro/tennis-wall 8 min · Ph4 add heat training', wknd:false},
+  {day:'FRI',time:'8:00 PM',block:'Technique study + ACC race',detail:'Racecraft reading · race practice · record footage',                                  wknd:false},
+  {day:'FRI',time:'9:00 PM',block:'Debrief & journal',      detail:'Lap delta · mental state · bed 10:30',                                                   wknd:false},
+
+  // ── SAT ──
+  {day:'SAT',time:'7:30 AM', block:'Heavy lift / Test Day', detail:'Full-body strength. Ph5 alt weeks = Test Day: 3-min sprint, max neck hold, dead hang, reaction PB', wknd:true},
+  {day:'SAT',time:'9:00 AM', block:'Deep study block (90 min)',detail:'Mental-performance deep dive. Ph3+: Milliken + Carroll Smith setup theory',           wknd:true},
+  {day:'SAT',time:'11:00 AM',block:'ACC full race format',  detail:'Qualifying → AI race. Ph3+: 40–60 min races + pit stops. Telemetry → Trophii.AI',        wknd:true},
+  {day:'SAT',time:'Afternoon',block:'Karting (phase rotation)',detail:'Ph1–2 K1 Speed · Ph3 MSR · Ph4–5 HKC league. Caffeine gum 20 min before · electrolytes if outdoor', wknd:true},
+  {day:'SAT',time:'7:00 PM', block:'Mental training',       detail:'Mental-performance books + drills · race-strategy reflection (Ph4+)',                    wknd:true},
+
+  // ── SUN ──
+  {day:'SUN',time:'7:30 AM', block:'Z2 endurance (60 min)', detail:'Jog/cycle HR cap 145. 3-min max sprint test every 4th week (target ≥900m by Wk16)',     wknd:true},
+  {day:'SUN',time:'9:00 AM', block:'Weekly review',         detail:'Review notes · update book progress · check phase targets · plan next week',             wknd:true},
+  {day:'SUN',time:'4:00 PM', block:'Reaction + Anti-rotation',detail:'BatakPro/strobe · juggling · Pallof · Copenhagen plank · BOSU balance · cold-shower finish', wknd:true},
+  {day:'SUN',time:'8:00 PM', block:'ACC sim + debrief',     detail:'Apply study concept · record · Trophii compare · one rest evening/week OK',              wknd:true},
+];
+
+/* ════════════════════════════════════════
+   STORAGE — localStorage (persists in any browser)
+════════════════════════════════════════ */
+const store = {
+  async get(k){ try{ const r=localStorage.getItem('rmp_'+k); return r?JSON.parse(r):null; }catch{ return null; }},
+  async set(k,v){ try{ localStorage.setItem('rmp_'+k, JSON.stringify(v)); return true; }catch(e){ alert('Save failed — storage may be full or blocked. '+e.message); return false; }},
+  async push(k,item){ const a=await store.get(k)||[]; a.push(item); return await store.set(k,a); },
+  async del(k,idx){ const a=await store.get(k)||[]; a.splice(idx,1); return await store.set(k,a); },
+  async remove(k){ try{ localStorage.removeItem('rmp_'+k); }catch{} }
+};
+
+/* ════════════════════════════════════════
+   UTILS
+════════════════════════════════════════ */
+const today = () => new Date().toISOString().split('T')[0];
+const fmtDate = d => { if(!d) return '—'; try{ return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}); }catch{ return d; }};
+const currentWeek = () => Math.max(1, Math.min(26, Math.floor((new Date()-PLAN_START)/(7*86400000))+1));
+const phaseOfWeek = w => PHASES.find(p=>w>=p.wks[0]&&w<=p.wks[1])||PHASES[0];
+const lapSecs = t => {
+  if(!t||t==='—') return null;
+  const p=t.trim().split(':');
+  if(p.length===2) return parseFloat(p[0])*60+parseFloat(p[1]);
+  if(p.length===3) return parseFloat(p[0])*3600+parseFloat(p[1])*60+parseFloat(p[2]);
+  return parseFloat(t)||null;
+};
+const deltaStr = (lap,bench) => {
+  const l=lapSecs(lap), b=lapSecs(bench);
+  if(!l||!b) return '—';
+  const d=l-b;
+  return (d>=0?'+':'')+d.toFixed(3)+'s';
+};
+const deltaColor = d => d.startsWith('+') ? 'var(--red)' : d.startsWith('-') ? 'var(--green)' : 'var(--muted)';
+
+let toastTimer;
+function toast(msg='SAVED ✓') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+function setInput(id, val) { const el=document.getElementById(id); if(el&&val!==undefined&&val!==null) el.value=val; }
+
+Chart.defaults.color = '#555';
+Chart.defaults.borderColor = '#1E1E1E';
+Chart.defaults.font.family = "'Share Tech Mono', monospace";
+const chartDefaults = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{ legend:{ labels:{ color:'#666', font:{size:9} } } },
+  scales:{
+    x:{ ticks:{color:'#555',font:{size:8},maxTicksLimit:12}, grid:{color:'#171717'} },
+    y:{ ticks:{color:'#555',font:{size:9}}, grid:{color:'#171717'} }
+  }
+};
+
+/* ════════════════════════════════════════
+   NAV
+════════════════════════════════════════ */
+function nav(viewId) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  const view = document.getElementById('view-'+viewId);
+  const link = document.querySelector(`[data-view="${viewId}"]`);
+  if(view) view.classList.add('active');
+  if(link) link.classList.add('active');
+  refreshView(viewId);
+}
+document.querySelectorAll('.nav-link').forEach(l => l.onclick = () => { nav(l.dataset.view); closeDrawer(); });
+
+/* ════════════════════════════════════════
+   MOBILE DRAWER
+════════════════════════════════════════ */
+function toggleDrawer() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('drawer-overlay');
+  const open = sb.classList.toggle('open');
+  ov.classList.toggle('show', open);
+  document.body.classList.toggle('drawer-open', open);
+}
+function closeDrawer() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('show');
+  document.body.classList.remove('drawer-open');
+}
+
+/* ════════════════════════════════════════
+   REFRESH ROUTER
+════════════════════════════════════════ */
+async function refreshView(id) {
+  switch(id) {
+    case 'dashboard':  await refreshDashboard(); break;
+    case 'schedule':   renderSchedule(); break;
+    case 'workout':    await renderWorkout(); break;
+    case 'neck':       await renderNeck(); break;
+    case 'fitness':    await renderFitness(); break;
+    case 'acc':        await renderACC(); break;
+    case 'telemetry':  await renderTelemetry(); break;
+    case 'karting':    await renderKarting(); break;
+    case 'nutrition':  await renderNutrition(); break;
+    case 'bodyweight': await renderBodyweight(); break;
+    case 'mental':     await renderMental(); break;
+    case 'books':      await renderBooks(); break;
+    case 'youtube':    await renderYouTube(); break;
+    case 'settings':   loadSettings(); break;
+  }
+}
+
+/* ════════════════════════════════════════
+   DASHBOARD
+════════════════════════════════════════ */
+async function refreshDashboard() {
+  const w = currentWeek(), ph = phaseOfWeek(w);
+  document.getElementById('nav-phase').textContent = ph.n;
+  document.getElementById('nav-week').textContent = w;
+  document.getElementById('mb-phase').textContent = ph.n;
+  document.getElementById('mb-week').textContent = w;
+  document.getElementById('d-phase').textContent = ph.n;
+  document.getElementById('d-phase-name').textContent = ph.name.toUpperCase();
+  document.getElementById('d-week').textContent = w;
+
+  // Phase dots
+  const pd = document.getElementById('d-phase-dots');
+  pd.innerHTML = PHASES.map(p => `
+    <div class="phase-row">
+      <span class="phase-row-label" style="color:${p.col}">${'Ph'+p.n}</span>
+      ${Array.from({length:p.wks[1]-p.wks[0]+1},(_,i)=>{const wn=p.wks[0]+i;
+        return `<div class="wdot${wn<w?' done':''}${wn===w?' current':''}"></div>`;
+      }).join('')}
+      <span class="phase-row-date">${p.dates}</span>
+    </div>`).join('');
+
+  const pct = Math.round((w-1)/25*100);
+  document.getElementById('d-overall-pct').textContent = pct+'%';
+  document.getElementById('d-overall-bar').style.width = pct+'%';
+
+  // Streaks
+  const ms = await store.get('mental') || [];
+  const streak = calcStreak(ms);
+  document.getElementById('d-streak').textContent = streak;
+  document.getElementById('nav-streak').textContent = streak;
+  document.getElementById('mb-streak').textContent = streak;
+
+  // Neck
+  const nk = (await store.get('neck') || []).filter(e=>e.load>0&&e.type?.includes('Harness'));
+  if(nk.length) {
+    const last = nk[nk.length-1];
+    document.getElementById('d-neck').textContent = last.load+'lb';
+    document.getElementById('d-neck-val').textContent = last.load+'lb / 15lb';
+    document.getElementById('d-neck-bar').style.width = Math.min(100,last.load/15*100)+'%';
+  }
+
+  // ACC – COTA best
+  const acc = (await store.get('acc') || []).filter(e=>e.track==='cota');
+  if(acc.length) {
+    const best = acc.reduce((b,e)=>{ const bs=lapSecs(b.time),es=lapSecs(e.time); return(es&&bs&&es<bs)?e:b; });
+    document.getElementById('d-cota').textContent = best.time||'—';
+    document.getElementById('d-cota-val').textContent = (best.time||'—')+' / sub-2:04';
+    const s=lapSecs(best.time); if(s) document.getElementById('d-cota-bar').style.width = Math.min(100,Math.max(0,(128-s)/(128-124)*100))+'%';
+  }
+
+  // Weight
+  const wt = await store.get('weight') || [];
+  if(wt.length) {
+    const last = wt[wt.length-1];
+    document.getElementById('d-weight').textContent = last.w;
+    document.getElementById('d-wt-val').textContent = last.w+'lb / 170–175lb';
+    document.getElementById('d-wt-bar').style.width = Math.min(100,Math.max(0,(190-last.w)/(190-172.5)*100))+'%';
+  }
+
+  // Sprint
+  const ft = (await store.get('fitness') || []).filter(e=>e.type==='sprint');
+  if(ft.length) {
+    const best = Math.max(...ft.map(e=>parseFloat(e.result)||0));
+    document.getElementById('d-sprint-val').textContent = best+'m / 900m';
+    document.getElementById('d-sprint-bar').style.width = Math.min(100,best/900*100)+'%';
+  }
+
+  // Recent workouts
+  const wo = (await store.get('workouts') || []).slice(-5).reverse();
+  document.getElementById('d-recent-workouts').innerHTML = wo.length ? wo.map(e=>`
+    <div class="log-item">
+      <span class="log-date">${fmtDate(e.date)}</span>
+      <span class="log-main" style="font-size:12px;color:var(--accent)">${e.block?.split('–')[1]?.trim()||e.block}</span>
+      <span class="log-note">${e.notes||''}</span>
+    </div>`).join('') : '<p style="color:var(--muted);font-size:10px;">No sessions yet.</p>';
+
+  // Recent ACC
+  const recAcc = (await store.get('acc') || []).slice(-5).reverse();
+  document.getElementById('d-recent-acc').innerHTML = recAcc.length ? recAcc.map(e=>{
+    const t=TRACKS.find(x=>x.id===e.track), d=deltaStr(e.time,t?.bench);
+    return `<div class="log-item">
+      <span class="log-date">${fmtDate(e.date)}</span>
+      <span class="log-main" style="font-size:13px;color:var(--yellow)">${e.time}</span>
+      <span class="log-note">${t?.name||e.track}</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:${deltaColor(d)};flex-shrink:0;">${d}</span>
+    </div>`;}).join('') : '<p style="color:var(--muted);font-size:10px;">No sessions yet.</p>';
+
+  // Mini mental chart
+  const miniData = ms.slice(-14);
+  const mc = document.getElementById('chart-mental-mini');
+  if(mc){ if(mc._ch) mc._ch.destroy();
+    mc._ch = new Chart(mc, {type:'line',data:{labels:miniData.map(e=>fmtDate(e.date)),
+      datasets:[{data:miniData.map(e=>e.score),borderColor:'var(--yellow)',backgroundColor:'rgba(255,209,0,.06)',
+      tension:.35,pointRadius:3,pointBackgroundColor:'var(--yellow)'}]},
+      options:{...chartDefaults,plugins:{legend:{display:false}},scales:{
+        x:{...chartDefaults.scales.x},y:{...chartDefaults.scales.y,min:0,max:10}}}});
+  }
+}
+
+/* ════════════════════════════════════════
+   SCHEDULE  (grouped by day · tap any row to check)
+════════════════════════════════════════ */
+async function renderSchedule() {
+  const wk = parseInt(document.getElementById('sched-week').value) || 1;
+  const ph = phaseOfWeek(wk);
+  document.getElementById('sched-phase-display').value = `Phase ${ph.n} – ${ph.name}`;
+  const saved = await store.get('sched_w'+wk) || {};
+  const dayNames = {MON:'Monday',TUE:'Tuesday',WED:'Wednesday',THU:'Thursday',FRI:'Friday',SAT:'Saturday',SUN:'Sunday'};
+  const order = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  let html = '';
+  order.forEach(day => {
+    const items = SCHED_ITEMS.map((s,i)=>({s,i})).filter(x=>x.s.day===day);
+    if(!items.length) return;
+    const done = items.filter(x=>saved[x.i]).length;
+    const wknd = items[0].s.wknd;
+    html += `<div class="sched-day-group">
+      <div class="sched-day-header${wknd?' wknd':''}">
+        <span class="sdh-day" style="color:${wknd?'var(--blue)':'var(--red)'}">${dayNames[day]}</span>
+        <span class="sdh-count">${done}/${items.length}</span>
+      </div>` +
+      items.map(({s,i})=>`
+      <label class="sched-item${saved[i]?' done':''}">
+        <input type="checkbox" class="sched-check" ${saved[i]?'checked':''} onchange="saveSchedItem(${wk},${i},this.checked)">
+        <span class="sched-time">${s.time}</span>
+        <div class="sched-body"><div class="sched-block">${s.block}</div><div class="sched-detail">${s.detail}</div></div>
+      </label>`).join('') +
+      `</div>`;
+  });
+  document.getElementById('sched-list').innerHTML = html;
+  updateSchedStats(wk, saved);
+}
+async function saveSchedItem(wk, i, val) {
+  const saved = await store.get('sched_w'+wk) || {};
+  saved[i] = val; await store.set('sched_w'+wk, saved);
+  await renderSchedule();
+  if(val) toast('CHECKED ✓');
+}
+function updateSchedStats(wk, saved) {
+  const done = Object.values(saved).filter(Boolean).length;
+  const total = SCHED_ITEMS.length;
+  document.getElementById('sched-done').textContent = done;
+  document.getElementById('sched-total').textContent = total;
+  document.getElementById('sched-pct').textContent = Math.round(done/total*100)+'%';
+}
+
+/* ════════════════════════════════════════
+   WORKOUT
+════════════════════════════════════════ */
+async function saveWorkout() {
+  const entry = {
+    date: document.getElementById('wo-date').value||today(),
+    phase: document.getElementById('wo-phase').value,
+    block: document.getElementById('wo-block').value,
+    dur: document.getElementById('wo-dur').value,
+    energy: document.getElementById('wo-energy').value,
+    rpe: document.getElementById('wo-rpe').value,
+    exercises: document.getElementById('wo-exercises').value,
+    notes: document.getElementById('wo-notes').value,
+    ts: Date.now()
+  };
+  await store.push('workouts', entry);
+  toast('WORKOUT LOGGED ✓');
+  document.getElementById('wo-exercises').value = '';
+  document.getElementById('wo-notes').value = '';
+  await renderWorkout();
+}
+async function renderWorkout() {
+  const log = (await store.get('workouts') || []).slice().reverse();
+  document.getElementById('wo-history').innerHTML = log.length ? log.slice(0,20).map((e,i)=>`
+    <div class="log-item">
+      <button class="del-btn" onclick="delItem('workouts',${log.length-1-i},renderWorkout)">✕</button>
+      <span class="log-date">${fmtDate(e.date)}</span>
+      <span class="log-main" style="font-size:11px;color:var(--accent)">${e.block?.split('–')[1]?.trim()||e.block}</span>
+      <span class="log-note">${e.notes||''}</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--yellow);flex-shrink:0;">RPE ${e.rpe||'—'}</span>
+    </div>`).join('') : '<p style="color:var(--muted);font-size:10px;">No sessions logged yet.</p>';
+
+  const byWeek = {}; const all = (await store.get('workouts')||[]);
+  all.forEach(e=>{ const d=new Date(e.date+'T12:00:00'); const w=Math.max(1,Math.floor((d-PLAN_START)/(7*86400000))+1); byWeek[w]=(byWeek[w]||0)+1; });
+  const wks = Array.from({length:26},(_,i)=>i+1);
+  const vc = document.getElementById('chart-wo-vol');
+  if(vc){ if(vc._ch) vc._ch.destroy();
+    vc._ch = new Chart(vc, {type:'bar',data:{labels:wks.map(w=>`Wk${w}`),
+      datasets:[{label:'Sessions',data:wks.map(w=>byWeek[w]||0),backgroundColor:'rgba(255,98,0,.55)',borderColor:'var(--accent)',borderWidth:1}]},
+      options:{...chartDefaults,plugins:{legend:{display:false}},scales:{x:{...chartDefaults.scales.x},y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,stepSize:1}}}}});
+  }
+}
+
+/* ════════════════════════════════════════
+   NECK
+════════════════════════════════════════ */
+async function saveNeck() {
+  const pain = document.getElementById('neck-pain').value;
+  if(pain==='Y') alert('⚠ MORNING NECK PAIN — Drop harness 5 lb. Chin-tucks only for 1 week. Do NOT push through!');
+  const entry = {
+    date: document.getElementById('neck-date').value||today(),
+    type: document.getElementById('neck-type').value,
+    load: parseFloat(document.getElementById('neck-load').value)||0,
+    sets: document.getElementById('neck-sets').value,
+    pain, notes: document.getElementById('neck-notes').value
+  };
+  await store.push('neck', entry);
+  toast('NECK SESSION LOGGED ✓');
+  document.getElementById('neck-load').value=''; document.getElementById('neck-sets').value=''; document.getElementById('neck-notes').value='';
+  await renderNeck();
+}
+async function renderNeck() {
+  const log = await store.get('neck') || [];
+  const harnessLog = log.filter(e=>e.load>0&&e.type?.includes('Harness'));
+
+  if(harnessLog.length) {
+    const last = harnessLog[harnessLog.length-1];
+    document.getElementById('neck-cur').textContent = last.load+'lb';
+    document.getElementById('neck-bar').style.width = Math.min(100,last.load/15*100)+'%';
+    document.getElementById('neck-last').innerHTML = `
+      <div style="font-size:10px;">
+        <div style="color:var(--teal);font-weight:600;margin-bottom:3px;">${last.type}</div>
+        <div>${last.sets} @ <strong style="color:var(--yellow)">${last.load} lb</strong></div>
+        <div style="color:var(--muted);margin-top:2px;">${fmtDate(last.date)}</div>
+        ${last.notes?`<div style="color:var(--muted);font-size:9px;margin-top:2px;">${last.notes}</div>`:''}
+      </div>`;
+  }
+
+  const ladderEl = document.getElementById('neck-ladder-vis');
+  const targets = [0,2.5,7.5,12.5,15];
+  const current = harnessLog.length ? harnessLog[harnessLog.length-1].load : 0;
+  ladderEl.innerHTML = targets.map((t,i)=>`
+    <div class="nl-col">
+      <div class="nl-bar-wrap">
+        <div class="nl-fill" style="height:${t===0?0:Math.min(100,current/t*100)}%;background:${PHASES[i].col}"></div>
+      </div>
+      <div class="nl-lbl">${t===0?'0':t+'lb'}</div>
+    </div>`).join('');
+
+  document.getElementById('neck-history').innerHTML = log.length ? [...log].reverse().slice(0,30).map((e,i)=>`
+    <div class="log-item">
+      <button class="del-btn" onclick="delItem('neck',${log.length-1-i},renderNeck)">✕</button>
+      <span class="log-date">${fmtDate(e.date)}</span>
+      <span style="font-size:10px;color:var(--teal);">${e.type}</span>
+      ${e.load?`<span class="log-main" style="font-size:13px;color:var(--yellow)">${e.load}lb</span>`:''}
+      <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);">${e.sets||''}</span>
+      ${e.pain==='Y'?'<span style="color:var(--red);font-size:8px;">⚠PAIN</span>':''}
+      <span class="log-note">${e.notes||''}</span>
+    </div>`).join('') : '<p style="color:var(--muted);font-size:10px;">No sessions yet.</p>';
+
+  const nc = document.getElementById('chart-neck');
+  if(nc){ if(nc._ch) nc._ch.destroy();
+    nc._ch = new Chart(nc, {type:'line',data:{labels:harnessLog.map(e=>fmtDate(e.date)),
+      datasets:[{label:'Harness Load (lb)',data:harnessLog.map(e=>e.load),borderColor:'var(--teal)',backgroundColor:'rgba(0,200,180,.07)',tension:.3,pointRadius:4,pointBackgroundColor:'var(--teal)'}]},
+      options:{...chartDefaults,plugins:{legend:{display:false}},scales:{
+        x:{...chartDefaults.scales.x}, y:{...chartDefaults.scales.y,min:0,max:20}}}});
+  }
+}
+
+/* ════════════════════════════════════════
+   FITNESS TESTS
+════════════════════════════════════════ */
+async function saveFitnessTest() {
+  const entry = {
+    date: document.getElementById('ft-date').value||today(),
+    type: document.getElementById('ft-type').value,
+    result: document.getElementById('ft-result').value,
+    week: document.getElementById('ft-week').value||currentWeek(),
+    notes: document.getElementById('ft-notes').value
+  };
+  await store.push('fitness', entry);
+  toast('TEST LOGGED ✓');
+  document.getElementById('ft-result').value=''; document.getElementById('ft-notes').value='';
+  await renderFitness();
+}
+async function renderFitness() {
+  const log = await store.get('fitness') || [];
+  const sprints=log.filter(e=>e.type==='sprint'), hangs=log.filter(e=>e.type==='hang');
+  const fiveks=log.filter(e=>e.type==='5k'), reacts=log.filter(e=>e.type==='reaction');
+  if(sprints.length) document.getElementById('ft-sprint').textContent = Math.max(...sprints.map(e=>parseFloat(e.result)||0))+'m';
+  if(hangs.length) document.getElementById('ft-hang').textContent = Math.max(...hangs.map(e=>parseFloat(e.result)||0))+'s';
+  if(fiveks.length) document.getElementById('ft-5k').textContent = fiveks[fiveks.length-1].result;
+  if(reacts.length) document.getElementById('ft-react').textContent = reacts[reacts.length-1].result;
+
+  document.getElementById('ft-table').innerHTML = [...log].reverse().map((e,i)=>`<tr>
+    <td>${fmtDate(e.date)}</td>
+    <td><span class="badge b-blue">${e.type.toUpperCase()}</span></td>
+    <td class="mono c-yellow">${e.result}</td>
+    <td class="mono c-muted">Wk ${e.week||'—'}</td>
+    <td class="mono">${{sprint:'≥900m',hang:'≥60s',reaction:'PB','5k':'—',vo2:'—'}[e.type]||'—'}</td>
+    <td class="c-muted">${e.notes||''}</td>
+    <td><button class="del-btn" onclick="delItem('fitness',${log.length-1-i},renderFitness)">✕</button></td>
+  </tr>`).join('');
+
+  const sc = document.getElementById('chart-sprint');
+  if(sc){ if(sc._ch) sc._ch.destroy();
+    sc._ch = new Chart(sc, {type:'line',data:{labels:sprints.map(e=>`Wk${e.week}`),
+      datasets:[
+        {label:'Sprint (m)',data:sprints.map(e=>parseFloat(e.result)||0),borderColor:'var(--blue)',backgroundColor:'rgba(30,143,255,.07)',tension:.3,pointRadius:5,pointBackgroundColor:'var(--blue)'},
+        {label:'Target 900m',data:sprints.map(()=>900),borderColor:'rgba(255,209,0,.4)',borderDash:[6,4],pointRadius:0}
+      ]},
+      options:{...chartDefaults,scales:{x:{...chartDefaults.scales.x},y:{...chartDefaults.scales.y}}}});
+  }
+}
+
+/* ════════════════════════════════════════
+   ACC
+════════════════════════════════════════ */
+async function saveACC() {
+  const time = document.getElementById('acc-time').value.trim();
+  if(!time){ alert('Enter a lap time (e.g. 2:05.432)'); return; }
+  const track = document.getElementById('acc-track').value;
+  const entry = {
+    date: document.getElementById('acc-date').value||today(),
+    track,
+    time,
+    stype: document.getElementById('acc-stype').value,
+    setup: document.getElementById('acc-setup').value,
+    cond: document.getElementById('acc-cond').value,
+    trophii: document.getElementById('acc-trophii').value,
+    notes: document.getElementById('acc-notes').value
+  };
+  await store.push('acc', entry);
+  toast('LAP LOGGED ✓');
+  document.getElementById('acc-time').value=''; document.getElementById('acc-notes').value='';
+  const selEl = document.getElementById('chart-track-select');
+  if(selEl) selEl.value = track;
+  await renderACC();
+}
+async function renderACC() {
+  const log = await store.get('acc') || [];
+
+  document.getElementById('track-cards').innerHTML = TRACKS.map(t=>{
+    const sessions=log.filter(e=>e.track===t.id);
+    const best=sessions.length?sessions.reduce((b,e)=>{ const bs=lapSecs(b.time),es=lapSecs(e.time); return(es&&bs&&es<bs)?e:b; }):null;
+    const d=best?deltaStr(best.time,t.bench):'—';
+    return `<div class="track-card${t.cota?' is-cota':''}${t.finale?' is-finale':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div class="tc-num">${t.num}</div>
+        <span class="badge ${t.cota?'b-accent':t.finale?'b-green':'b-blue'}">${sessions.length} LAPS</span>
+      </div>
+      <div class="tc-name">${t.name}</div>
+      <div class="tc-car">${t.car}</div>
+      <div class="tc-stats">
+        <div class="tc-stat"><div class="tc-stat-lbl">BENCH</div><div class="tc-stat-val" style="color:var(--muted)">${t.bench}</div></div>
+        <div class="tc-stat"><div class="tc-stat-lbl">YOUR BEST</div><div class="tc-stat-val" style="color:var(--green)">${best?.time||'—'}</div></div>
+        <div class="tc-stat"><div class="tc-stat-lbl">DELTA</div><div class="tc-stat-val" style="color:${deltaColor(d)};font-size:13px">${d}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const selEl = document.getElementById('chart-track-select');
+  const selTrack = selEl ? selEl.value : 'cota';
+  const tMeta = TRACKS.find(x=>x.id===selTrack) || TRACKS[2];
+  const benchSecs = lapSecs(tMeta.bench);
+  const cData = log.filter(e=>e.track===selTrack).sort((a,b)=>a.date.localeCompare(b.date));
+  const infoEl = document.getElementById('chart-track-info');
+  if(infoEl) infoEl.textContent = `${tMeta.car} · Benchmark ${tMeta.bench}` + (cData.length?` · ${cData.length} laps logged`:` · no laps yet`);
+  const cc = document.getElementById('chart-cota');
+  if(cc){ if(cc._ch) cc._ch.destroy();
+    cc._ch = new Chart(cc, {type:'line',data:{labels:cData.map(e=>fmtDate(e.date)),
+      datasets:[
+        {label:'Your Lap',data:cData.map(e=>lapSecs(e.time)),borderColor:'var(--accent)',backgroundColor:'rgba(255,98,0,.07)',tension:.3,pointRadius:5,pointBackgroundColor:'var(--accent)',spanGaps:true},
+        {label:`Benchmark ${tMeta.bench}`,data:cData.map(()=>benchSecs),borderColor:'rgba(255,209,0,.45)',borderDash:[6,4],pointRadius:0}
+      ]},
+      options:{...chartDefaults,scales:{x:{...chartDefaults.scales.x},y:{...chartDefaults.scales.y,ticks:{color:'#555',callback:v=>{const m=Math.floor(v/60);const s=(v%60).toFixed(0).padStart(2,'0');return m>0?`${m}:${s}`:`${v.toFixed(1)}s`;}}}}}});
+  }
+
+  document.getElementById('acc-table').innerHTML = [...log].reverse().map((e,i)=>{
+    const t=TRACKS.find(x=>x.id===e.track), d=deltaStr(e.time,t?.bench);
+    return `<tr>
+      <td>${fmtDate(e.date)}</td>
+      <td><span class="badge ${e.track==='cota'?'b-accent':e.track==='nordschleife'?'b-green':'b-blue'}">${t?.name||e.track}</span></td>
+      <td class="mono c-yellow" style="font-size:13px">${e.time}</td>
+      <td class="mono c-muted">${t?.bench||'—'}</td>
+      <td class="mono" style="color:${deltaColor(d)}">${d}</td>
+      <td class="c-muted">${e.stype}</td>
+      <td class="c-muted">${e.setup}</td>
+      <td>${e.trophii==='Y'?'<span class="badge b-green">✓</span>':'<span class="badge b-muted">—</span>'}</td>
+      <td class="c-muted" style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.notes||''}</td>
+      <td><button class="del-btn" onclick="delItem('acc',${log.length-1-i},renderACC)">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════
+   TELEMETRY
+════════════════════════════════════════ */
+async function saveTelemetry() {
+  const entry = {
+    date:document.getElementById('tel-date').value||today(),
+    track:document.getElementById('tel-track').value,
+    bb:document.getElementById('tel-bb').value,
+    tc1:document.getElementById('tel-tc1').value,
+    tc2:document.getElementById('tel-tc2').value,
+    abs:document.getElementById('tel-abs').value,
+    map:document.getElementById('tel-map').value,
+    base:document.getElementById('tel-base').value,
+    time:document.getElementById('tel-time').value,
+    trophii:document.getElementById('tel-trophii').value,
+    change:document.getElementById('tel-change').value
+  };
+  await store.push('telemetry', entry);
+  toast('EXPERIMENT SAVED ✓');
+  ['tel-track','tel-bb','tel-tc1','tel-tc2','tel-abs','tel-map','tel-time','tel-trophii','tel-change'].forEach(id=>setInput(id,''));
+  await renderTelemetry();
+}
+async function renderTelemetry() {
+  const log = (await store.get('telemetry') || []).slice().reverse();
+  document.getElementById('tel-history').innerHTML = log.length ? log.slice(0,20).map((e,i)=>`
+    <div style="padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted)">${fmtDate(e.date)}</span>
+        <span style="font-weight:600;font-size:10.5px">${e.track||'—'}</span>
+        ${e.time?`<span style="font-family:'Barlow Condensed',monospace;font-size:15px;font-weight:700;color:var(--yellow);margin-left:auto">${e.time}</span>`:''}
+        <button class="del-btn" onclick="delItem('telemetry',${log.length-1-i},renderTelemetry)">✕</button>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;">
+        ${e.bb?`<span class="badge b-accent">BB ${e.bb}%</span>`:''}
+        ${e.tc1?`<span class="badge b-blue">TC1 ${e.tc1}</span>`:''}
+        ${e.tc2?`<span class="badge b-blue">TC2 ${e.tc2}</span>`:''}
+        ${e.abs?`<span class="badge b-teal">ABS ${e.abs}</span>`:''}
+        ${e.map?`<span class="badge b-yellow">MAP ${e.map}</span>`:''}
+        <span class="badge b-purple">${e.base}</span>
+      </div>
+      ${e.trophii?`<div style="font-size:9px;color:var(--muted);margin-bottom:2px"><strong style="color:var(--green)">Trophii:</strong> ${e.trophii}</div>`:''}
+      ${e.change?`<div style="font-size:9px;color:var(--muted)"><strong style="color:var(--accent)">Changed:</strong> ${e.change}</div>`:''}
+    </div>`).join('') : '<p style="color:var(--muted);font-size:10px;">No experiments logged yet.</p>';
+}
+
+/* ════════════════════════════════════════
+   KARTING
+════════════════════════════════════════ */
+async function saveKarting() {
+  const entry = {
+    date:document.getElementById('kart-date').value||today(),
+    venue:document.getElementById('kart-venue').value,
+    type:document.getElementById('kart-type').value,
+    finish:document.getElementById('kart-finish').value,
+    lap:document.getElementById('kart-lap').value,
+    energy:document.getElementById('kart-energy').value,
+    gum:document.getElementById('kart-gum').value,
+    notes:document.getElementById('kart-notes').value
+  };
+  await store.push('karting', entry);
+  toast('KARTING SESSION LOGGED ✓');
+  document.getElementById('kart-lap').value=''; document.getElementById('kart-finish').value=''; document.getElementById('kart-notes').value='';
+  await renderKarting();
+}
+async function renderKarting() {
+  const log = await store.get('karting') || [];
+  document.getElementById('k1-count').textContent = log.filter(e=>e.venue==='k1').length;
+  document.getElementById('msr-count').textContent = log.filter(e=>e.venue==='msr').length;
+  document.getElementById('hkc-count').textContent = log.filter(e=>e.venue==='hkc').length;
+
+  const now = new Date();
+  document.getElementById('hkc-cal').innerHTML = HKC.map(h=>{
+    const dt = new Date(h.date+'T12:00:00'); const past = dt < now;
+    const attended = log.some(e=>e.venue==='hkc'&&e.date===h.date);
+    const ph = PHASES[h.p-1];
+    return `<tr ${past?'style="opacity:.55"':''}>
+      <td class="mono">${dt.toLocaleDateString('en-US',{month:'short',day:'numeric',weekday:'short'})}</td>
+      <td><span class="badge ${h.s==='S3'?'b-yellow':'b-red'}">${h.s}</span></td>
+      <td><span class="badge ${h.t==='Endurance'?'b-purple':'b-blue'}">${h.t}</span></td>
+      <td><span class="badge" style="background:${ph.col}18;color:${ph.col};border-color:${ph.col}">Ph${h.p}</span></td>
+      <td>${attended?'<span class="badge b-green">✓ RACED</span>':past?'<span style="color:var(--muted);font-size:9px">MISSED</span>':'<span style="color:var(--muted);font-size:9px">UPCOMING</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  const vn = {k1:'K1 Speed',msr:'MSR Houston',hkc:'HKC'};
+  const vc2 = {k1:'b-accent',msr:'b-blue',hkc:'b-red'};
+  document.getElementById('kart-table').innerHTML = [...log].reverse().map((e,i)=>`<tr>
+    <td>${fmtDate(e.date)}</td>
+    <td><span class="badge ${vc2[e.venue]||'b-blue'}">${vn[e.venue]||e.venue}</span></td>
+    <td class="c-muted" style="font-size:9.5px">${e.type}</td>
+    <td class="mono c-yellow">${e.lap||'—'}</td>
+    <td class="mono">${e.finish||'—'}</td>
+    <td>${e.gum==='Y'?'<span class="badge b-green">✓</span>':'<span class="c-muted">—</span>'}</td>
+    <td class="mono">${e.energy||'—'}</td>
+    <td class="c-muted" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.notes||''}</td>
+    <td><button class="del-btn" onclick="delItem('karting',${log.length-1-i},renderKarting)">✕</button></td>
+  </tr>`).join('');
+}
+
+/* ════════════════════════════════════════
+   BODY WEIGHT
+════════════════════════════════════════ */
+async function saveWeight() {
+  const w = parseFloat(document.getElementById('bw-weight').value);
+  if(!w) return;
+  await store.push('weight', {date:document.getElementById('bw-date').value||today(), w, notes:document.getElementById('bw-notes').value});
+  toast('WEIGHT LOGGED ✓');
+  document.getElementById('bw-notes').value='';
+  await renderBodyweight();
+}
+
+/* ════════════════════════════════════════
+   NUTRITION & GROCERY
+════════════════════════════════════════ */
+const GROCERY = {
+  protein: ['Eggs (2 dozen)','Chicken breast/thighs (4–5 lbs)','Salmon or fatty fish (1–2 lbs)','Lean ground turkey/beef (1–2 lbs)','Greek yogurt (3 tubs)','Cottage cheese (2 tubs)','Whey protein isolate'],
+  carbs: ['Rolled oats (large container)','Brown rice or quinoa (2–3 bags)','Sweet potatoes (10–12)','Bananas (2 bunches)','Berries (2 packs)','Apples (1 bag)','Rice cakes (2 packs)'],
+  veg: ['Salad greens / spinach (2 bags)','Broccoli (2–3 bags)','Mixed stir-fry veg (2 bags)','Salad extras (cucumber, tomato, onion)','Natural peanut butter','Raw almonds (1 bag)','Olive oil','Black coffee'],
+  supp: ['Creatine monohydrate (5g/day)','Pre-workout ✓ owned','Caffeine gum ✓ owned','Beta-alanine (CarnoSyn)','Omega-3 fish oil','Vitamin D3','Magnesium glycinate','Electrolytes (LMNT)','L-Tyrosine (optional)']
+};
+async function renderNutrition() {
+  const checked = await store.get('grocery') || {};
+  const renderCat = (cat, elId) => {
+    const el = document.getElementById(elId);
+    if(!el) return;
+    el.innerHTML = GROCERY[cat].map((item,i)=>{
+      const key = cat+'_'+i;
+      return `<label style="display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:11px;">
+        <input type="checkbox" ${checked[key]?'checked':''} onchange="toggleGrocery('${key}',this.checked)" style="width:18px;height:18px;accent-color:var(--green);flex-shrink:0;">
+        <span style="${checked[key]?'color:var(--muted);text-decoration:line-through;':''}">${item}</span>
+      </label>`;
+    }).join('');
+  };
+  renderCat('protein','groc-protein');
+  renderCat('carbs','groc-carbs');
+  renderCat('veg','groc-veg');
+  renderCat('supp','groc-supp');
+}
+async function toggleGrocery(key, val) {
+  const checked = await store.get('grocery') || {};
+  checked[key] = val;
+  await store.set('grocery', checked);
+  await renderNutrition();
+}
+async function resetGrocery() {
+  if(!confirm('Reset all grocery checkmarks for a new shopping trip?')) return;
+  await store.set('grocery', {});
+  toast('LIST RESET ✓');
+  await renderNutrition();
+}
+
+async function renderBodyweight() {
+  const log = await store.get('weight') || [];
+  if(log.length) {
+    const last = log[log.length-1];
+    document.getElementById('bw-cur').textContent = last.w;
+    document.getElementById('bw-lost').textContent = Math.max(0,190-last.w).toFixed(1);
+  }
+  PHASES.forEach(ph=>{
+    const phEnd = new Date(PLAN_START.getTime()+(ph.wks[1]*7*86400000));
+    const phLog = log.filter(e=>new Date(e.date+'T12:00:00')<=phEnd);
+    if(phLog.length) document.getElementById('bwp'+ph.n).textContent = phLog[phLog.length-1].w+' lb';
+  });
+  const wc = document.getElementById('chart-weight');
+  if(wc){ if(wc._ch) wc._ch.destroy();
+    wc._ch = new Chart(wc, {type:'line',data:{labels:log.map(e=>fmtDate(e.date)),
+      datasets:[
+        {label:'Weight (lb)',data:log.map(e=>e.w),borderColor:'var(--green)',backgroundColor:'rgba(61,181,74,.07)',tension:.3,pointRadius:4,pointBackgroundColor:'var(--green)'},
+        {label:'Target 172.5lb',data:log.map(()=>172.5),borderColor:'rgba(255,209,0,.4)',borderDash:[6,4],pointRadius:0}
+      ]},
+      options:{...chartDefaults}});
+  }
+}
+
+/* ════════════════════════════════════════
+   MENTAL STATE
+════════════════════════════════════════ */
+function setupScoreGrid() {
+  const g = document.getElementById('score-grid');
+  if(g.children.length) return;
+  const cols = ['var(--red)','var(--red)','var(--accent)','var(--accent)','var(--yellow)','var(--yellow)','var(--green)','var(--green)','var(--green)','var(--teal)'];
+  for(let i=1;i<=10;i++){
+    const b = document.createElement('button');
+    b.className='score-btn'; b.textContent=i; b.dataset.v=i;
+    b.style.cssText=`border-color:${cols[i-1]};color:${cols[i-1]}`;
+    b.onclick=()=>{
+      document.querySelectorAll('.score-btn').forEach(x=>{x.classList.remove('sel');x.style.background='';});
+      b.classList.add('sel'); b.style.background=cols[i-1];
+      document.getElementById('score-val').textContent=i+'/10';
+    };
+    g.appendChild(b);
+  }
+}
+async function saveMental() {
+  const sel = document.querySelector('.score-btn.sel');
+  if(!sel) { alert('Select a mental state score 1–10'); return; }
+  const entry = {
+    date:document.getElementById('ms-date').value||today(),
+    score:parseInt(sel.dataset.v),
+    viz:document.getElementById('ms-viz').value,
+    sleep:document.getElementById('ms-sleep').value,
+    bed:document.getElementById('ms-bed').value,
+    notes:document.getElementById('ms-notes').value
+  };
+  await store.push('mental', entry);
+  toast('MENTAL STATE LOGGED ✓');
+  document.getElementById('ms-notes').value='';
+  document.querySelectorAll('.score-btn').forEach(b=>{b.classList.remove('sel');b.style.background='';});
+  document.getElementById('score-val').textContent='—';
+  await renderMental();
+}
+function calcStreak(log) {
+  if(!log.length) return 0;
+  const sorted=[...log].sort((a,b)=>b.date.localeCompare(a.date));
+  let s=0, prev=new Date(today());
+  for(const e of sorted){
+    const d=new Date(e.date+'T12:00:00');
+    const diff=Math.round((prev-d)/86400000);
+    if(diff<=1){s++;prev=d;}else break;
+  }
+  return s;
+}
+async function renderMental() {
+  setupScoreGrid();
+  const log = await store.get('mental') || [];
+  const streak=calcStreak(log);
+  document.getElementById('ms-day-streak').textContent=streak;
+  document.getElementById('d-streak').textContent=streak;
+  document.getElementById('nav-streak').textContent=streak;
+  const mbs=document.getElementById('mb-streak'); if(mbs) mbs.textContent=streak;
+  const vizStreak=calcStreak(log.filter(e=>e.viz==='Y'));
+  document.getElementById('ms-viz-streak').textContent=vizStreak;
+
+  const sColors={1:'var(--red)',2:'var(--red)',3:'var(--accent)',4:'var(--accent)',5:'var(--yellow)',6:'var(--yellow)',7:'var(--green)',8:'var(--green)',9:'var(--green)',10:'var(--teal)'};
+  document.getElementById('ms-history').innerHTML = log.length ? [...log].reverse().slice(0,30).map((e,i)=>`
+    <div class="log-item">
+      <button class="del-btn" onclick="delItem('mental',${log.length-1-i},renderMental)">✕</button>
+      <span class="log-date">${fmtDate(e.date)}</span>
+      <span class="log-main" style="font-size:20px;color:${sColors[e.score]||'var(--text)'}">${e.score}</span>
+      <span style="font-size:9px;color:${e.viz==='Y'?'var(--green)':'var(--muted)'};">${e.viz==='Y'?'✓ VIZ':e.viz==='P'?'~VIZ':'✗ NO VIZ'}</span>
+      ${e.sleep?`<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted)">${e.sleep}h</span>`:''}
+      <span class="log-note">${e.notes||''}</span>
+    </div>`).join('') : '<p style="color:var(--muted);font-size:10px;">No entries yet.</p>';
+
+  const mc = document.getElementById('chart-mental');
+  const recent = log.slice(-30);
+  if(mc){ if(mc._ch) mc._ch.destroy();
+    mc._ch = new Chart(mc, {type:'line',data:{labels:recent.map(e=>fmtDate(e.date)),
+      datasets:[
+        {label:'Mental State',data:recent.map(e=>e.score),borderColor:'var(--yellow)',backgroundColor:'rgba(255,209,0,.08)',tension:.35,pointRadius:4,pointBackgroundColor:'var(--yellow)'},
+        {label:'Sleep (hrs)',data:recent.map(e=>parseFloat(e.sleep)||null),borderColor:'var(--blue)',backgroundColor:'rgba(30,143,255,.04)',tension:.3,pointRadius:3,yAxisID:'y1'}
+      ]},
+      options:{...chartDefaults,scales:{
+        x:{...chartDefaults.scales.x},
+        y:{...chartDefaults.scales.y,min:0,max:10},
+        y1:{min:0,max:12,position:'right',ticks:{color:'#3A6AAA',font:{size:8}},grid:{display:false}}}}});
+  }
+}
+
+/* ════════════════════════════════════════
+   BOOKS
+════════════════════════════════════════ */
+async function saveBook() {
+  const id=document.getElementById('book-select').value;
+  const books=await store.get('books')||{};
+  books[id]={status:document.getElementById('book-status').value,pct:parseInt(document.getElementById('book-pct').value)||0,phase:document.getElementById('book-phase').value,note:document.getElementById('book-note').value,updated:today()};
+  await store.set('books',books);
+  toast('BOOK UPDATED ✓');
+  document.getElementById('book-note').value='';
+  await renderBooks();
+}
+async function renderBooks() {
+  const books = await store.get('books') || {};
+  const sBadge={done:'b-green',reading:'b-yellow',not_started:'b-muted'};
+  const sLabel={done:'DONE',reading:'READING',not_started:'—'};
+  const sFill={done:'var(--green)',reading:'var(--yellow)',not_started:'var(--border)'};
+  document.getElementById('book-list').innerHTML = Object.entries(BOOK_NAMES).map(([id,name])=>{
+    const b=books[id]||{status:'not_started',pct:0};
+    return `<div style="padding:6px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px">
+        <span class="badge ${sBadge[b.status]||'b-muted'}" style="flex-shrink:0">${sLabel[b.status]||'—'}</span>
+        <span style="font-size:10px;font-weight:500;flex:1">${name}</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--yellow)">${b.pct||0}%</span>
+      </div>
+      <div style="height:3px;background:var(--border)"><div style="height:3px;background:${sFill[b.status]};width:${b.pct||0}%"></div></div>
+      ${b.note?`<div style="font-size:8.5px;color:var(--muted);margin-top:3px">${b.note}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════
+   YOUTUBE
+════════════════════════════════════════ */
+async function saveYouTube() {
+  const entry={date:document.getElementById('yt-date').value||today(),type:document.getElementById('yt-type').value,title:document.getElementById('yt-title').value,week:document.getElementById('yt-week').value||currentWeek(),phase:document.getElementById('yt-phase').value,url:document.getElementById('yt-url').value};
+  await store.push('youtube',entry);
+  toast('CONTENT LOGGED ✓');
+  document.getElementById('yt-title').value=''; document.getElementById('yt-url').value='';
+  await renderYouTube();
+}
+async function renderYouTube() {
+  const log=await store.get('youtube')||[];
+  const vids=log.filter(e=>e.type==='video'||e.type==='short');
+  const rec=log.filter(e=>e.type==='recorded');
+  document.getElementById('yt-vids').textContent=vids.length;
+  document.getElementById('yt-recorded').textContent=rec.length;
+  const weeks=new Set(vids.map(e=>e.week));
+  let streak=0;let w=currentWeek();
+  while(weeks.has(String(w))||weeks.has(w)){streak++;w--;}
+  document.getElementById('yt-streak').textContent=streak;
+  const tBadge={video:'b-red',short:'b-accent',recorded:'b-blue',trophii:'b-green'};
+  document.getElementById('yt-history').innerHTML=log.length?[...log].reverse().slice(0,20).map((e,i)=>`
+    <div class="log-item">
+      <button class="del-btn" onclick="delItem('youtube',${log.length-1-i},renderYouTube)">✕</button>
+      <span class="log-date">${fmtDate(e.date)}</span>
+      <span class="badge ${tBadge[e.type]||'b-muted'}">${e.type.toUpperCase()}</span>
+      <span class="log-note">${e.title}</span>
+      ${e.url?`<a href="${e.url}" target="_blank" style="font-family:monospace;font-size:8px;color:var(--red);flex-shrink:0">▶</a>`:''}
+    </div>`).join(''):'<p style="color:var(--muted);font-size:10px">No content logged yet.</p>';
+}
+
+/* ════════════════════════════════════════
+   SETTINGS
+════════════════════════════════════════ */
+async function saveSettings() {
+  await store.set('settings',{name:document.getElementById('set-name').value,sw:document.getElementById('set-sw').value,tw:document.getElementById('set-tw').value,start:document.getElementById('set-start').value});
+  toast('SETTINGS SAVED ✓');
+}
+async function loadSettings() {
+  const s=await store.get('settings'); if(!s) return;
+  setInput('set-name',s.name); setInput('set-sw',s.sw); setInput('set-tw',s.tw); setInput('set-start',s.start);
+}
+async function exportData() {
+  const keys=['workouts','neck','acc','karting','weight','mental','fitness','books','youtube','telemetry','grocery','settings'];
+  const data={};
+  await Promise.all(keys.map(async k=>data[k]=await store.get(k)));
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`rmp-tracker-${today()}.json`; a.click();
+  toast('EXPORTED ✓');
+}
+async function importData(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const text=await file.text();
+  try{
+    const data=JSON.parse(text);
+    await Promise.all(Object.entries(data).map(([k,v])=>store.set(k,v)));
+    toast('IMPORTED ✓'); await refreshDashboard();
+  }catch{ alert('Invalid JSON file'); }
+}
+async function clearAll() {
+  const keys=['workouts','neck','acc','karting','weight','mental','fitness','books','youtube','telemetry','grocery'];
+  await Promise.all(keys.map(k=>store.remove(k)));
+  toast('DATA CLEARED'); await refreshDashboard();
+}
+
+/* ════════════════════════════════════════
+   SHARED DELETE HELPER
+════════════════════════════════════════ */
+async function delItem(key, idx, refreshFn) {
+  await store.del(key, idx);
+  await refreshFn();
+}
+
+/* ════════════════════════════════════════
+   INIT
+════════════════════════════════════════ */
+async function init() {
+  document.querySelectorAll('input[type="date"]').forEach(el=>{ if(!el.value) el.value=today(); });
+  setInput('sched-week', currentWeek());
+  setInput('ft-week', currentWeek());
+  setInput('yt-week', currentWeek());
+  setupScoreGrid();
+
+  const ph = phaseOfWeek(currentWeek());
+  setInput('sched-phase-display', `Phase ${ph.n} – ${ph.name}`);
+
+  await refreshDashboard();
+
+  await renderNeck();
+  await renderBodyweight();
+  await renderMental();
+  await renderNutrition();
+
+  const loading = document.getElementById('loading');
+  loading.style.opacity='0';
+  setTimeout(()=>loading.style.display='none', 400);
+}
+
+init().catch(err=>{
+  console.error(err);
+  document.getElementById('loading').style.display='none';
+});
+</script>
+</body>
+</html>
